@@ -196,43 +196,6 @@ body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100
 .ai-panel{background:var(--purple-bg);border:0.5px solid var(--purple-dim);border-radius:8px;padding:14px;margin-top:14px;font-size:12px;line-height:1.6;color:var(--text);display:none;font-family:var(--fm)}
 .ai-panel.on{display:block}
 .ai-panel-hdr{font-size:10px;color:var(--purple);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
-/* MODE SWITCHER */
-.mode-switch{display:flex;gap:0;margin-bottom:20px;border:0.5px solid var(--border2);border-radius:7px;overflow:hidden}
-.mode-btn{flex:1;padding:10px;font-family:var(--fm);font-size:12px;cursor:pointer;background:transparent;border:none;color:var(--text2);transition:all .15s;text-align:center}
-.mode-btn.on{background:var(--amber-bg);color:var(--amber)}
-.mode-btn:hover:not(.on){background:var(--bg2);color:var(--text)}
-.upload-zone{border:1.5px dashed var(--border2);border-radius:10px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg2)}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--amber-dim);background:var(--amber-bg)}
-.upload-zone-icon{font-size:28px;margin-bottom:10px;opacity:.5}
-.upload-zone-title{font-size:14px;font-weight:600;margin-bottom:4px}
-.upload-zone-sub{font-size:11px;color:var(--text3);font-family:var(--fm)}
-.upload-preview{background:var(--bg2);border:0.5px solid var(--teal-dim);border-radius:8px;padding:12px 14px;margin-top:12px;font-family:var(--fm);font-size:11px;color:var(--teal);display:none}
-.upload-preview.on{display:block}
-.ai-fill-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--fm);font-size:9px;padding:2px 7px;border-radius:3px;background:var(--purple-bg);color:var(--purple);border:0.5px solid var(--purple-dim);margin-left:6px;vertical-align:middle}
-.optional-toggle{font-family:var(--fm);font-size:11px;color:var(--text3);cursor:pointer;margin-bottom:12px;display:flex;align-items:center;gap:6px;user-select:none}
-.optional-toggle:hover{color:var(--text2)}
-.optional-fields{display:none}
-.optional-fields.on{display:block}
-/* MODE SWITCHER */
-.mode-switch{display:flex;gap:0;margin-bottom:20px;border:0.5px solid var(--border2);border-radius:7px;overflow:hidden}
-.mode-btn{flex:1;padding:10px;font-family:var(--fm);font-size:12px;cursor:pointer;background:transparent;border:none;color:var(--text2);transition:all .15s;text-align:center}
-.mode-btn.on{background:var(--amber-bg);color:var(--amber)}
-.mode-btn:hover:not(.on){background:var(--bg2);color:var(--text)}
-/* UPLOAD ZONE */
-.upload-zone{border:1.5px dashed var(--border2);border-radius:10px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg2)}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--amber-dim);background:var(--amber-bg)}
-.upload-zone-icon{font-size:28px;margin-bottom:10px;opacity:.5}
-.upload-zone-title{font-size:14px;font-weight:600;margin-bottom:4px}
-.upload-zone-sub{font-size:11px;color:var(--text3);font-family:var(--fm)}
-.upload-preview{background:var(--bg2);border:0.5px solid var(--teal-dim);border-radius:8px;padding:12px 14px;margin-top:12px;font-family:var(--fm);font-size:11px;color:var(--teal);display:none}
-.upload-preview.on{display:block}
-/* AI FILL BADGE */
-.ai-fill-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--fm);font-size:9px;padding:2px 7px;border-radius:3px;background:var(--purple-bg);color:var(--purple);border:0.5px solid var(--purple-dim);margin-left:6px;vertical-align:middle}
-/* OPTIONAL FIELDS TOGGLE */
-.optional-toggle{font-family:var(--fm);font-size:11px;color:var(--text3);cursor:pointer;margin-bottom:12px;display:flex;align-items:center;gap:6px;user-select:none}
-.optional-toggle:hover{color:var(--text2)}
-.optional-fields{display:none}
-.optional-fields.on{display:block}
 
 /* PIN MODAL */
 .pin-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:400;display:none;align-items:center;justify-content:center}
@@ -432,114 +395,50 @@ body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100
       <span>Add New Business / Idea</span>
       <span class="modal-x" onclick="closeAdd()">✕ close</span>
     </div>
-
-    <!-- MODE SWITCHER -->
-    <div class="mode-switch">
-      <button class="mode-btn on" id="mode-form-btn" onclick="switchMode('form')">Fill Out Form</button>
-      <button class="mode-btn" id="mode-doc-btn" onclick="switchMode('doc')">Upload Document</button>
+    <div class="frow">
+      <div class="fgroup"><label class="flabel">Business Name *</label><input class="finput" id="f-name" placeholder="e.g. Tirraf Thrift"></div>
+      <div class="fgroup"><label class="flabel">Short Description *</label><input class="finput" id="f-sub" placeholder="e.g. Vintage thrift + rework"></div>
     </div>
-
-    <!-- DOCUMENT UPLOAD MODE -->
-    <div id="mode-doc" style="display:none">
-      <div class="upload-zone" id="upload-zone"
-        onclick="document.getElementById('doc-file').click()"
-        ondragover="event.preventDefault();this.classList.add('drag')"
-        ondragleave="this.classList.remove('drag')"
-        ondrop="handleDrop(event)">
-        <div class="upload-zone-icon">&#128196;</div>
-        <div class="upload-zone-title">Drop your document here</div>
-        <div class="upload-zone-sub">PDF, Word (.docx), or .txt — Claude Haiku reads it and fills the form</div>
-        <input type="file" id="doc-file" accept=".pdf,.txt,.docx,.doc,.md" style="display:none" onchange="handleFileSelect(event)">
+    <div class="frow">
+      <div class="fgroup"><label class="flabel">Track</label>
+        <select class="fselect" id="f-track">
+          <option value="Track A — Active Operations">Track A — Active</option>
+          <option value="Track B — NEBCM Digital">Track B — Digital</option>
+          <option value="Track C — Ideas in Validation">Track C — Validation</option>
+          <option value="Track D — Morocco to International">Track D — International</option>
+        </select>
       </div>
-      <div class="upload-preview" id="upload-preview"></div>
-      <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+      <div class="fgroup"><label class="flabel">Status</label>
+        <select class="fselect" id="f-status">
+          <option value="active">Active</option>
+          <option value="building">Building</option>
+          <option value="ready">Ready</option>
+          <option value="pivot">Pivoting</option>
+          <option value="validation">Validating</option>
+          <option value="concept">Concept</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fgroup"><label class="flabel">Engine</label>
+        <select class="fselect" id="f-engine">
+          <option value="Engine 1 — Process">Engine 1 — Process</option>
+          <option value="Engine 2 — Talk">Engine 2 — Talk</option>
+          <option value="Engine 3 — Series">Engine 3 — Series</option>
+          <option value="Engine 4 — Platform">Engine 4 — Platform</option>
+        </select>
+      </div>
+      <div class="fgroup"><label class="flabel">NEBCM Score (0-100)</label><input class="finput" id="f-score" type="number" min="0" max="100" placeholder="75"></div>
+    </div>
+    <div class="fgroup"><label class="flabel">Description / Strategy Notes</label><textarea class="finput ftextarea" id="f-desc" placeholder="Concept, target market, revenue model..."></textarea></div>
+    <div class="modal-footer">
+      <button class="mbtn ai" onclick="analyzeIdea()">Analyze with Haiku</button>
+      <div style="display:flex;gap:8px">
         <button class="mbtn cancel" onclick="closeAdd()">Cancel</button>
-        <button class="mbtn ai" id="doc-extract-btn" onclick="extractFromDoc()" style="display:none">Extract with Haiku</button>
+        <button class="mbtn submit" onclick="submitIdea()">Add to Portfolio</button>
       </div>
     </div>
-
-    <!-- FORM MODE -->
-    <div id="mode-form">
-      <div class="frow">
-        <div class="fgroup">
-          <label class="flabel">Business Name *</label>
-          <input class="finput" id="f-name" placeholder="e.g. Tirraf Thrift">
-        </div>
-        <div class="fgroup">
-          <label class="flabel">Short Description *</label>
-          <input class="finput" id="f-sub" placeholder="e.g. Vintage thrift + rework series">
-        </div>
-      </div>
-      <div class="fgroup">
-        <label class="flabel">Full Description / Strategy Notes</label>
-        <textarea class="finput ftextarea" id="f-desc" placeholder="Concept, target market, revenue model, Morocco angle..."></textarea>
-      </div>
-
-      <div class="optional-toggle" onclick="toggleOptional()">
-        <span id="optional-arrow">▶</span>
-        <span>Optional fields</span>
-        <span style="font-size:9px;opacity:.5">(AI will deduce these if left blank)</span>
-      </div>
-      <div class="optional-fields" id="optional-fields">
-        <div class="frow">
-          <div class="fgroup">
-            <label class="flabel">Track <span class="ai-fill-badge">AI</span></label>
-            <select class="fselect" id="f-track">
-              <option value="">— let AI decide —</option>
-              <option value="Track A — Active Operations">Track A — Active</option>
-              <option value="Track B — NEBCM Digital">Track B — Digital</option>
-              <option value="Track C — Ideas in Validation">Track C — Validation</option>
-              <option value="Track D — Morocco to International">Track D — International</option>
-            </select>
-          </div>
-          <div class="fgroup">
-            <label class="flabel">Status <span class="ai-fill-badge">AI</span></label>
-            <select class="fselect" id="f-status">
-              <option value="">— let AI decide —</option>
-              <option value="active">Active</option>
-              <option value="building">Building</option>
-              <option value="ready">Ready</option>
-              <option value="pivot">Pivoting</option>
-              <option value="validation">Validating</option>
-              <option value="concept">Concept</option>
-            </select>
-          </div>
-        </div>
-        <div class="frow">
-          <div class="fgroup">
-            <label class="flabel">Engine <span class="ai-fill-badge">AI</span></label>
-            <select class="fselect" id="f-engine">
-              <option value="">— let AI decide —</option>
-              <option value="Engine 1 — Process">Engine 1 — Process</option>
-              <option value="Engine 2 — Talk">Engine 2 — Talk</option>
-              <option value="Engine 3 — Series">Engine 3 — Series</option>
-              <option value="Engine 4 — Platform">Engine 4 — Platform</option>
-            </select>
-          </div>
-          <div class="fgroup">
-            <label class="flabel">Score (0-100) <span class="ai-fill-badge">AI</span></label>
-            <input class="finput" id="f-score" type="number" min="0" max="100" placeholder="AI will estimate">
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="mbtn ai" onclick="aiDeduceAndSubmit()">AI Fill + Add</button>
-        <div style="display:flex;gap:8px">
-          <button class="mbtn cancel" onclick="closeAdd()">Cancel</button>
-          <button class="mbtn submit" onclick="submitIdea()">Add to Portfolio</button>
-        </div>
-      </div>
-      <div class="ai-panel" id="ai-panel">
-        <div class="ai-panel-hdr">Claude Haiku Analysis</div>
-        <div id="ai-content"></div>
-        <div id="ai-fill-actions" style="display:none;margin-top:12px;display:flex;gap:8px">
-          <button class="mbtn submit" onclick="confirmAiFill()">Confirm + Add</button>
-          <button class="mbtn cancel" onclick="document.getElementById('ai-fill-actions').style.display='none'">Edit manually</button>
-        </div>
-      </div>
-    </div>
-
+    <div class="ai-panel" id="ai-panel"><div class="ai-panel-hdr">Claude Haiku Analysis</div><div id="ai-content"></div></div>
   </div>
 </div>
 
@@ -1034,286 +933,29 @@ function addMsg(text, role) {
 }
 
 // ─── ADD MODAL ────────────────────────────────────────────────────────────────
-let uploadedDocText = '';
-let aiFillData = null;
-
 function openAdd() {
   if(!isUnlocked && PIN_HASH) { openPinModal(); return; }
   document.getElementById('add-modal').classList.add('open');
   document.getElementById('ai-panel').classList.remove('on');
-  uploadedDocText = '';
-  aiFillData = null;
   ['f-name','f-sub','f-desc','f-score'].forEach(id => { const el=document.getElementById(id); if(el)el.value=''; });
-  ['f-track','f-status','f-engine'].forEach(id => { const el=document.getElementById(id); if(el)el.value=''; });
-  switchMode('form');
-  document.getElementById('upload-preview').classList.remove('on');
-  document.getElementById('doc-extract-btn').style.display='none';
 }
-
 function closeAdd() { document.getElementById('add-modal').classList.remove('open'); }
-
-function switchMode(mode) {
-  document.getElementById('mode-form').style.display = mode==='form' ? 'block' : 'none';
-  document.getElementById('mode-doc').style.display  = mode==='doc'  ? 'block' : 'none';
-  document.getElementById('mode-form-btn').classList.toggle('on', mode==='form');
-  document.getElementById('mode-doc-btn').classList.toggle('on',  mode==='doc');
-}
-
-function toggleOptional() {
-  const fields = document.getElementById('optional-fields');
-  const arrow  = document.getElementById('optional-arrow');
-  const on = fields.classList.toggle('on');
-  arrow.textContent = on ? '▼' : '▶';
-}
-
-// ── DOCUMENT UPLOAD ──
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('upload-zone').classList.remove('drag');
-  const file = e.dataTransfer.files[0];
-  if(file) processFile(file);
-}
-function handleFileSelect(e) {
-  const file = e.target.files[0];
-  if(file) processFile(file);
-}
-
-function processFile(file) {
-  const allowed = ['text/plain','text/markdown','application/pdf',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/msword'];
-  const preview = document.getElementById('upload-preview');
-  const extractBtn = document.getElementById('doc-extract-btn');
-
-  preview.classList.add('on');
-  preview.textContent = 'Reading ' + file.name + '...';
-
-  if(file.type === 'text/plain' || file.name.endsWith('.md') || file.name.endsWith('.txt')) {
-    const reader = new FileReader();
-    reader.onload = ev => {
-      uploadedDocText = ev.target.result.slice(0, 8000);
-      preview.textContent = '✓ ' + file.name + ' loaded (' + uploadedDocText.length + ' chars). Ready to extract.';
-      extractBtn.style.display = 'inline-flex';
-    };
-    reader.readAsText(file);
-  } else if(file.type === 'application/pdf') {
-    // For PDF: read as base64 and send to API with extraction prompt
-    const reader = new FileReader();
-    reader.onload = ev => {
-      uploadedDocText = '__PDF__' + ev.target.result.split(',')[1];
-      preview.textContent = '✓ ' + file.name + ' loaded (PDF). Ready to extract.';
-      extractBtn.style.display = 'inline-flex';
-    };
-    reader.readAsDataURL(file);
-  } else {
-    // DOCX and others: read as text fallback
-    const reader = new FileReader();
-    reader.onload = ev => {
-      // Try to pull readable text from binary
-      const raw = ev.target.result;
-      const text = raw.replace(/[^ -~
-	]/g, ' ').replace(/\s{3,}/g,' ').slice(0,6000);
-      uploadedDocText = text;
-      preview.textContent = '✓ ' + file.name + ' loaded. Ready to extract.';
-      extractBtn.style.display = 'inline-flex';
-    };
-    reader.readAsText(file, 'utf-8');
-  }
-}
-
-async function extractFromDoc() {
-  if(!uploadedDocText) { showToast('No document loaded'); return; }
-  const preview = document.getElementById('upload-preview');
-  preview.textContent = 'Claude Haiku is reading your document...';
-
-  const prompt = `You are the NEBCM AI assistant. Extract business idea information from this document and return ONLY a JSON object with these exact keys:
-{
-  "name": "business name (string, required)",
-  "sub": "one-line description under 10 words (string, required)",
-  "desc": "full strategy description (string)",
-  "track": one of ["Track A — Active Operations","Track B — NEBCM Digital","Track C — Ideas in Validation","Track D — Morocco to International"] or null,
-  "status": one of ["active","building","ready","pivot","validation","concept"] or null,
-  "engine": one of ["Engine 1 — Process","Engine 2 — Talk","Engine 3 — Series","Engine 4 — Platform"] or null,
-  "viability": number 0-100 or null,
-  "ops": number 0-100 or null,
-  "demand": number 0-100 or null,
-  "scale": number 0-100 or null,
-  "insights": ["insight 1","insight 2","insight 3"],
-  "actions": ["action 1","action 2","action 3"]
-}
-Return ONLY the JSON. No explanation. No markdown.
-
-Document:
-${uploadedDocText.startsWith('__PDF__') ? '[PDF document — extract what you can from context]' : uploadedDocText}`;
-
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], max_tokens: 800 }),
-    });
-    const data = await res.json();
-    const raw = data.content?.[0]?.text || '';
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if(!jsonMatch) throw new Error('Could not parse AI response');
-    aiFillData = JSON.parse(jsonMatch[0]);
-
-    // Switch to form and populate
-    switchMode('form');
-    populateForm(aiFillData);
-    // Show optional fields so user can see what was filled
-    const fields = document.getElementById('optional-fields');
-    fields.classList.add('on');
-    document.getElementById('optional-arrow').textContent = '▼';
-
-    preview.textContent = '✓ Extracted and filled. Review the form and click Add to Portfolio.';
-    showToast('Form populated from document', 'ok');
-  } catch(e) {
-    preview.textContent = 'Extraction failed: ' + e.message;
-    showToast('Try uploading a .txt file instead');
-  }
-}
-
-function populateForm(d) {
-  if(d.name)   document.getElementById('f-name').value = d.name;
-  if(d.sub)    document.getElementById('f-sub').value  = d.sub;
-  if(d.desc)   document.getElementById('f-desc').value = d.desc;
-  if(d.track)  document.getElementById('f-track').value  = d.track;
-  if(d.status) document.getElementById('f-status').value = d.status;
-  if(d.engine) document.getElementById('f-engine').value = d.engine;
-  if(d.viability||d.ops||d.demand||d.scale) {
-    const avg = Math.round(((d.viability||70)+(d.ops||70)+(d.demand||70)+(d.scale||70))/4);
-    document.getElementById('f-score').value = avg;
-  }
-}
-
-// ── AI FILL + SUBMIT (form mode) ──
-async function aiDeduceAndSubmit() {
-  const name = document.getElementById('f-name').value.trim();
-  const desc = document.getElementById('f-desc').value.trim();
-  if(!name) { showToast('Business name is required'); return; }
-
-  const panel  = document.getElementById('ai-panel');
-  const content = document.getElementById('ai-content');
-  panel.classList.add('on');
-  content.innerHTML = '<span class="typing"></span>';
-  document.getElementById('ai-fill-actions').style.display = 'none';
-
-  const sub    = document.getElementById('f-sub').value.trim();
-  const track  = document.getElementById('f-track').value;
-  const status = document.getElementById('f-status').value;
-  const engine = document.getElementById('f-engine').value;
-  const score  = document.getElementById('f-score').value;
-
-  const prompt = `You are the NEBCM AI assistant for a Morocco-based entrepreneur. Fill in missing fields for this business idea and return ONLY a JSON object:
-
-Provided info:
-- Name: ${name}
-- Short description: ${sub || 'NOT PROVIDED — generate one'}
-- Description: ${desc || 'NOT PROVIDED — deduce from name'}
-- Track: ${track || 'NOT PROVIDED — choose best fit'}
-- Status: ${status || 'NOT PROVIDED — choose best fit'}
-- Engine: ${engine || 'NOT PROVIDED — choose best fit'}
-- Score: ${score || 'NOT PROVIDED — estimate'}
-
-Return ONLY this JSON:
-{
-  "sub": "one-line description under 10 words",
-  "track": one of ["Track A — Active Operations","Track B — NEBCM Digital","Track C — Ideas in Validation","Track D — Morocco to International"],
-  "status": one of ["active","building","ready","pivot","validation","concept"],
-  "engine": one of ["Engine 1 — Process","Engine 2 — Talk","Engine 3 — Series","Engine 4 — Platform"],
-  "viability": number 0-100,
-  "ops": number 0-100,
-  "demand": number 0-100,
-  "scale": number 0-100,
-  "insights": ["3 specific insights about this business in Morocco"],
-  "actions": ["3 immediate next actions"],
-  "analysis": "2-3 sentence NEBCM assessment"
-}`;
-
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], max_tokens: 600 }),
-    });
-    const data = await res.json();
-    const raw  = data.content?.[0]?.text || '';
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if(!jsonMatch) throw new Error('Parse error');
-    aiFillData = JSON.parse(jsonMatch[0]);
-    aiFillData.name = name;
-    aiFillData.desc = desc;
-
-    // Fill any blank fields
-    if(!sub && aiFillData.sub)     document.getElementById('f-sub').value = aiFillData.sub;
-    if(!track && aiFillData.track) document.getElementById('f-track').value = aiFillData.track;
-    if(!status && aiFillData.status) document.getElementById('f-status').value = aiFillData.status;
-    if(!engine && aiFillData.engine) document.getElementById('f-engine').value = aiFillData.engine;
-    if(!score && aiFillData.viability) {
-      const avg = Math.round(((aiFillData.viability||70)+(aiFillData.ops||70)+(aiFillData.demand||70)+(aiFillData.scale||70))/4);
-      document.getElementById('f-score').value = avg;
-    }
-    // Show optional fields
-    document.getElementById('optional-fields').classList.add('on');
-    document.getElementById('optional-arrow').textContent = '▼';
-
-    content.textContent = aiFillData.analysis || 'Fields deduced. Review above and confirm.';
-    document.getElementById('ai-fill-actions').style.display = 'flex';
-  } catch(e) {
-    content.textContent = 'Error: ' + e.message;
-  }
-}
-
-async function confirmAiFill() {
-  if(!aiFillData) { submitIdea(); return; }
-  const name = document.getElementById('f-name').value.trim();
-  const sub  = document.getElementById('f-sub').value.trim() || aiFillData.sub || name;
-  const score = parseInt(document.getElementById('f-score').value) || 70;
-  const newBiz = {
-    id: 'biz_'+Date.now(),
-    name, sub,
-    status: document.getElementById('f-status').value || aiFillData.status || 'concept',
-    track:  document.getElementById('f-track').value  || aiFillData.track  || 'Track C — Ideas in Validation',
-    engine: document.getElementById('f-engine').value || aiFillData.engine || 'Engine 2 — Talk',
-    score: {
-      viability: aiFillData.viability || score,
-      ops:       aiFillData.ops       || score,
-      demand:    aiFillData.demand    || score,
-      scale:     aiFillData.scale     || score,
-    },
-    insights: aiFillData.insights || ['Added via Command Center'],
-    actions:  aiFillData.actions  || ['Define strategy','Build content plan','Run Phase 0'],
-    notes:    document.getElementById('f-desc').value || aiFillData.desc || '',
-    content_days: 0,
-  };
-  const ok = await upsertBusiness(newBiz);
-  if(ok) {
-    await loadBusinesses();
-    await logActivity(newBiz.id, 'added', name);
-    closeAdd();
-    renderDashboard();
-    showToast(name + ' added to portfolio', 'ok');
-    aiFillData = null;
-  }
-}
 
 async function submitIdea() {
   const name = document.getElementById('f-name').value.trim();
-  const sub  = document.getElementById('f-sub').value.trim();
-  if(!name)  { showToast('Business name is required'); return; }
-  if(!sub)   { showToast('Short description is required'); return; }
+  const sub = document.getElementById('f-sub').value.trim();
+  if(!name||!sub) { showToast('Name and description required'); return; }
   const score = parseInt(document.getElementById('f-score').value)||70;
   const newBiz = {
     id: 'biz_'+Date.now(),
     name, sub,
-    status: document.getElementById('f-status').value || 'concept',
-    track:  document.getElementById('f-track').value  || 'Track C — Ideas in Validation',
-    engine: document.getElementById('f-engine').value || 'Engine 2 — Talk',
-    score:  { viability:score, ops:score, demand:score, scale:score },
-    insights: [document.getElementById('f-desc').value || 'Added via Command Center'],
-    actions:  ['Define strategy','Build content plan','Run Phase 0'],
-    notes:    document.getElementById('f-desc').value || '',
+    status: document.getElementById('f-status').value,
+    track: document.getElementById('f-track').value,
+    engine: document.getElementById('f-engine').value,
+    score: { viability:score, ops:score, demand:score, scale:score },
+    insights: [document.getElementById('f-desc').value||'Added via Command Center'],
+    actions: ['Define strategy','Build content plan','Run Phase 0'],
+    notes: '',
     content_days: 0,
   };
   const ok = await upsertBusiness(newBiz);
@@ -1323,6 +965,30 @@ async function submitIdea() {
     closeAdd();
     renderDashboard();
     showToast(name + ' added to portfolio', 'ok');
+  }
+}
+
+async function analyzeIdea() {
+  const name = document.getElementById('f-name').value.trim();
+  const desc = document.getElementById('f-desc').value.trim();
+  if(!name&&!desc) { showToast('Add name and description first'); return; }
+  const panel = document.getElementById('ai-panel');
+  const content = document.getElementById('ai-content');
+  panel.classList.add('on');
+  content.innerHTML = '<span class="typing"></span>';
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: `NEBCM analysis for Morocco-based entrepreneur:\n\nBusiness: ${name}\nDescription: ${desc}\n\nGive: (1) Viability 0-100, (2) Scalability 0-100, (3) Morocco advantage or risk, (4) Top 3 risks, (5) First 3 actions. Be specific and brief.` }],
+        max_tokens: 400,
+      }),
+    });
+    const data = await res.json();
+    content.textContent = data.content?.[0]?.text || data.error || 'Analysis failed.';
+  } catch(e) {
+    content.textContent = 'Error: ' + e.message;
   }
 }
 

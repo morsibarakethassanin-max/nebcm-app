@@ -214,25 +214,6 @@ body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100
 .optional-fields{display:none}
 .optional-fields.on{display:block}
 /* MODE SWITCHER */
-.mode-switch{display:flex;gap:0;margin-bottom:20px;border:0.5px solid var(--border2);border-radius:7px;overflow:hidden}
-.mode-btn{flex:1;padding:10px;font-family:var(--fm);font-size:12px;cursor:pointer;background:transparent;border:none;color:var(--text2);transition:all .15s;text-align:center}
-.mode-btn.on{background:var(--amber-bg);color:var(--amber)}
-.mode-btn:hover:not(.on){background:var(--bg2);color:var(--text)}
-/* UPLOAD ZONE */
-.upload-zone{border:1.5px dashed var(--border2);border-radius:10px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg2)}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--amber-dim);background:var(--amber-bg)}
-.upload-zone-icon{font-size:28px;margin-bottom:10px;opacity:.5}
-.upload-zone-title{font-size:14px;font-weight:600;margin-bottom:4px}
-.upload-zone-sub{font-size:11px;color:var(--text3);font-family:var(--fm)}
-.upload-preview{background:var(--bg2);border:0.5px solid var(--teal-dim);border-radius:8px;padding:12px 14px;margin-top:12px;font-family:var(--fm);font-size:11px;color:var(--teal);display:none}
-.upload-preview.on{display:block}
-/* AI FILL BADGE */
-.ai-fill-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--fm);font-size:9px;padding:2px 7px;border-radius:3px;background:var(--purple-bg);color:var(--purple);border:0.5px solid var(--purple-dim);margin-left:6px;vertical-align:middle}
-/* OPTIONAL FIELDS TOGGLE */
-.optional-toggle{font-family:var(--fm);font-size:11px;color:var(--text3);cursor:pointer;margin-bottom:12px;display:flex;align-items:center;gap:6px;user-select:none}
-.optional-toggle:hover{color:var(--text2)}
-.optional-fields{display:none}
-.optional-fields.on{display:block}
 
 /* PIN MODAL */
 .pin-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:400;display:none;align-items:center;justify-content:center}
@@ -533,7 +514,7 @@ body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100
       <div class="ai-panel" id="ai-panel">
         <div class="ai-panel-hdr">Claude Haiku Analysis</div>
         <div id="ai-content"></div>
-        <div id="ai-fill-actions" style="display:none;margin-top:12px;display:flex;gap:8px">
+        <div id="ai-fill-actions" style="margin-top:12px;display:none;gap:8px">
           <button class="mbtn submit" onclick="confirmAiFill()">Confirm + Add</button>
           <button class="mbtn cancel" onclick="document.getElementById('ai-fill-actions').style.display='none'">Edit manually</button>
         </div>
@@ -555,7 +536,18 @@ body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100
       <div class="pin-dot-d" id="pd3"></div>
     </div>
     <div class="pin-keypad">
-      ${[1,2,3,4,5,6,7,8,9,'','0','⌫'].map(k=>`<button class="pkey${k==='⌫'?' del':''}" onclick="pinKey('${k}')">${k}</button>`).join('')}
+      <button class="pkey" onclick="pinKey('1')">1</button>
+      <button class="pkey" onclick="pinKey('2')">2</button>
+      <button class="pkey" onclick="pinKey('3')">3</button>
+      <button class="pkey" onclick="pinKey('4')">4</button>
+      <button class="pkey" onclick="pinKey('5')">5</button>
+      <button class="pkey" onclick="pinKey('6')">6</button>
+      <button class="pkey" onclick="pinKey('7')">7</button>
+      <button class="pkey" onclick="pinKey('8')">8</button>
+      <button class="pkey" onclick="pinKey('9')">9</button>
+      <button class="pkey" onclick="pinKey('')"></button>
+      <button class="pkey" onclick="pinKey('0')">0</button>
+      <button class="pkey del" onclick="pinKey('⌫')">⌫</button>
     </div>
     <div class="pin-error" id="pin-error"></div>
     <div class="pin-hint" id="pin-hint">Team members can view everything without a PIN.</div>
@@ -1112,7 +1104,8 @@ function processFile(file) {
       // Try to pull readable text from binary
       const raw = ev.target.result;
       const text = raw.replace(/[^ -~
-	]/g, ' ').replace(/\s{3,}/g,' ').slice(0,6000);
+
+	]/g, ' ').replace(/\s{3,}/g,' ').slice(0,6000);
       uploadedDocText = text;
       preview.textContent = '✓ ' + file.name + ' loaded. Ready to extract.';
       extractBtn.style.display = 'inline-flex';

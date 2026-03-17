@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- NEBCM-BUILD-1773765689 -->
+<!-- NEBCM-BUILD-1773766753 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -256,14 +256,16 @@ body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100
 .t-great{background:var(--blue-bg);color:var(--blue)}
 .t-good{background:var(--amber-bg);color:var(--amber)}
 .t-trash{background:var(--coral-bg);color:var(--coral)}
-.mode-switch{display:flex;gap:0;margin-bottom:18px;border:0.5px solid var(--border2);border-radius:7px;overflow:hidden}
-.mode-btn{flex:1;padding:10px;font-family:var(--fm);font-size:12px;cursor:pointer;background:transparent;border:none;color:var(--text2);transition:all .15s;text-align:center}
-.mode-btn.on{background:var(--amber-bg);color:var(--amber)}
-.mode-btn:hover:not(.on){background:var(--bg2);color:var(--text)}
-.optional-toggle{font-family:var(--fm);font-size:11px;color:var(--text3);cursor:pointer;margin-bottom:10px;display:flex;align-items:center;gap:6px;user-select:none;padding:6px 0}
-.optional-toggle:hover{color:var(--text2)}
-.optional-fields{display:none}
-.optional-fields.on{display:block}
+.score-analysis{background:var(--bg2);border:0.5px solid var(--border);border-radius:8px;padding:14px;margin-top:10px;font-family:var(--fm);font-size:12px;line-height:1.7;display:none}
+.score-analysis.on{display:block}
+.srow{display:flex;gap:10px;margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--border)}
+.srow:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.srow-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;width:72px;flex-shrink:0;padding-top:2px;font-family:var(--fm)}
+.srow-txt{font-size:12px;color:var(--text2);flex:1;line-height:1.6}
+.verdict-box{margin-top:10px;padding:10px 12px;background:var(--amber-bg);border:0.5px solid var(--amber-dim);border-radius:6px;font-size:12px;color:var(--amber);font-family:var(--fm);line-height:1.5}
+.analyze-btn{font-family:var(--fm);font-size:11px;padding:7px 0;border:0.5px solid var(--purple-dim);border-radius:5px;cursor:pointer;background:var(--purple-bg);color:var(--purple);transition:background .12s;width:100%;margin-top:10px;text-align:center}
+.analyze-btn:hover{background:var(--purple-dim)}
+.analyze-btn:disabled{opacity:.5;cursor:default}
 </style>
 </head>
 <body>
@@ -402,90 +404,52 @@ body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100
   <div class="modal">
     <div class="modal-title">
       <span>Add New Business / Idea</span>
-      <span class="modal-x" onclick="closeAdd()">close</span>
+      <span class="modal-x" onclick="closeAdd()">✕ close</span>
     </div>
-    <div class="mode-switch">
-      <button class="mode-btn on" id="mode-form-btn" onclick="switchMode('form')">Fill Out Form</button>
-      <button class="mode-btn" id="mode-doc-btn" onclick="switchMode('doc')">Paste Text / Notes</button>
+    <div class="frow">
+      <div class="fgroup"><label class="flabel">Business Name *</label><input class="finput" id="f-name" placeholder="e.g. Tirraf Thrift"></div>
+      <div class="fgroup"><label class="flabel">Short Description *</label><input class="finput" id="f-sub" placeholder="e.g. Vintage thrift + rework"></div>
     </div>
-    <div id="mode-doc-view" style="display:none">
-      <div class="fgroup">
-        <label class="flabel">Paste your idea notes, voice memo transcript, or business plan</label>
-        <textarea class="finput ftextarea" id="f-paste" style="min-height:160px" placeholder="Paste anything — a rough description, a voice note transcript, bullet points. Claude Haiku will extract the business details automatically..."></textarea>
+    <div class="frow">
+      <div class="fgroup"><label class="flabel">Track</label>
+        <select class="fselect" id="f-track">
+          <option value="Track A — Active Operations">Track A — Active</option>
+          <option value="Track B — NEBCM Digital">Track B — Digital</option>
+          <option value="Track C — Ideas in Validation">Track C — Validation</option>
+          <option value="Track D — Morocco to International">Track D — International</option>
+        </select>
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+      <div class="fgroup"><label class="flabel">Status</label>
+        <select class="fselect" id="f-status">
+          <option value="active">Active</option>
+          <option value="building">Building</option>
+          <option value="ready">Ready</option>
+          <option value="pivot">Pivoting</option>
+          <option value="validation">Validating</option>
+          <option value="concept">Concept</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fgroup"><label class="flabel">Engine</label>
+        <select class="fselect" id="f-engine">
+          <option value="Engine 1 — Process">Engine 1 — Process</option>
+          <option value="Engine 2 — Talk">Engine 2 — Talk</option>
+          <option value="Engine 3 — Series">Engine 3 — Series</option>
+          <option value="Engine 4 — Platform">Engine 4 — Platform</option>
+        </select>
+      </div>
+      <div class="fgroup"><label class="flabel">NEBCM Score (0-100)</label><input class="finput" id="f-score" type="number" min="0" max="100" placeholder="75"></div>
+    </div>
+    <div class="fgroup"><label class="flabel">Description / Strategy Notes</label><textarea class="finput ftextarea" id="f-desc" placeholder="Concept, target market, revenue model..."></textarea></div>
+    <div class="modal-footer">
+      <button class="mbtn ai" onclick="analyzeIdea()">Analyze with Haiku</button>
+      <div style="display:flex;gap:8px">
         <button class="mbtn cancel" onclick="closeAdd()">Cancel</button>
-        <button class="mbtn ai" onclick="extractFromPaste()">Extract with Haiku</button>
-      </div>
-      <div class="ai-panel" id="ai-panel-doc">
-        <div class="ai-panel-hdr">Extracting fields...</div>
-        <div id="ai-doc-content"></div>
+        <button class="mbtn submit" onclick="submitIdea()">Add to Portfolio</button>
       </div>
     </div>
-    <div id="mode-form-view">
-      <div class="frow">
-        <div class="fgroup"><label class="flabel">Business Name *</label><input class="finput" id="f-name" placeholder="e.g. Tirraf Thrift"></div>
-        <div class="fgroup"><label class="flabel">Short Description *</label><input class="finput" id="f-sub" placeholder="e.g. Vintage thrift + rework"></div>
-      </div>
-      <div class="fgroup">
-        <label class="flabel">Full Description / Notes</label>
-        <textarea class="finput ftextarea" id="f-desc" placeholder="Concept, target market, revenue model..."></textarea>
-      </div>
-      <div class="optional-toggle" onclick="toggleOptional()">
-        <span id="opt-arrow">▶</span>
-        <span>Optional fields</span>
-        <span style="font-size:10px;color:var(--text3);font-family:var(--fm);margin-left:4px">(AI deduces if blank)</span>
-      </div>
-      <div class="optional-fields" id="optional-fields">
-        <div class="frow">
-          <div class="fgroup"><label class="flabel">Track</label>
-            <select class="fselect" id="f-track">
-              <option value="">AI decides</option>
-              <option value="Track A — Active Operations">Track A — Active</option>
-              <option value="Track B — NEBCM Digital">Track B — Digital</option>
-              <option value="Track C — Ideas in Validation">Track C — Validation</option>
-              <option value="Track D — Morocco to International">Track D — International</option>
-            </select>
-          </div>
-          <div class="fgroup"><label class="flabel">Status</label>
-            <select class="fselect" id="f-status">
-              <option value="">AI decides</option>
-              <option value="active">Active</option>
-              <option value="building">Building</option>
-              <option value="ready">Ready</option>
-              <option value="pivot">Pivoting</option>
-              <option value="validation">Validating</option>
-              <option value="concept">Concept</option>
-            </select>
-          </div>
-        </div>
-        <div class="frow">
-          <div class="fgroup"><label class="flabel">Engine</label>
-            <select class="fselect" id="f-engine">
-              <option value="">AI decides</option>
-              <option value="Engine 1 — Process">Engine 1 — Process</option>
-              <option value="Engine 2 — Talk">Engine 2 — Talk</option>
-              <option value="Engine 3 — Series">Engine 3 — Series</option>
-              <option value="Engine 4 — Platform">Engine 4 — Platform</option>
-            </select>
-          </div>
-          <div class="fgroup"><label class="flabel">Score (0-100)</label>
-            <input class="finput" id="f-score" type="number" min="0" max="100" placeholder="AI will estimate">
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="mbtn ai" onclick="aiDeduceAndAdd()">AI Fill + Add</button>
-        <div style="display:flex;gap:8px">
-          <button class="mbtn cancel" onclick="closeAdd()">Cancel</button>
-          <button class="mbtn submit" onclick="submitIdea()">Add to Portfolio</button>
-        </div>
-      </div>
-      <div class="ai-panel" id="ai-panel">
-        <div class="ai-panel-hdr">Claude Haiku</div>
-        <div id="ai-content"></div>
-      </div>
-    </div>
+    <div class="ai-panel" id="ai-panel"><div class="ai-panel-hdr">Claude Haiku Analysis</div><div id="ai-content"></div></div>
   </div>
 </div>
 
@@ -846,6 +810,13 @@ function showDet(id) {
       ? `<textarea class="notes-area" id="notes-${b.id}" placeholder="Add notes...">${b.notes||''}</textarea>
          <button class="save-btn" onclick="saveNotes('${b.id}')">Save Notes</button>`
       : `<div style="font-size:12px;color:var(--text2);line-height:1.6;font-family:var(--fm)">${b.notes||'No notes yet.'}</div>${editNote}`}
+
+    <div class="det-div"></div>
+    <div class="det-sec">Score Analysis</div>
+    <button class="analyze-btn" id="abtn-${b.id}" onclick="analyzeScores('${b.id}')">Analyze Scores with Haiku</button>
+    <div class="score-analysis" id="sa-${b.id}">
+      <div id="sa-content-${b.id}"></div>
+    </div>
   `;
   document.getElementById('det-overlay').classList.add('open');
 }
@@ -991,243 +962,30 @@ function addMsg(text, role) {
 }
 
 // ─── ADD MODAL ────────────────────────────────────────────────────────────────
-let aiFillData = null;
-
 function openAdd() {
   if(!isUnlocked && PIN_HASH) { openPinModal(); return; }
-  aiFillData = null;
   document.getElementById('add-modal').classList.add('open');
   document.getElementById('ai-panel').classList.remove('on');
-  const panelDoc = document.getElementById('ai-panel-doc');
-  if(panelDoc) panelDoc.classList.remove('on');
-  const ids = ['f-name','f-sub','f-desc','f-score','f-paste'];
-  ids.forEach(function(id) { const el = document.getElementById(id); if(el) el.value = ''; });
-  const sel = ['f-track','f-status','f-engine'];
-  sel.forEach(function(id) { const el = document.getElementById(id); if(el) el.value = ''; });
-  switchMode('form');
+  ['f-name','f-sub','f-desc','f-score'].forEach(id => { const el=document.getElementById(id); if(el)el.value=''; });
 }
-
-function closeAdd() {
-  document.getElementById('add-modal').classList.remove('open');
-}
-
-function switchMode(mode) {
-  const formView = document.getElementById('mode-form-view');
-  const docView  = document.getElementById('mode-doc-view');
-  const formBtn  = document.getElementById('mode-form-btn');
-  const docBtn   = document.getElementById('mode-doc-btn');
-  if(!formView || !docView) return;
-  formView.style.display = mode === 'form' ? 'block' : 'none';
-  docView.style.display  = mode === 'doc'  ? 'block' : 'none';
-  formBtn.classList.toggle('on', mode === 'form');
-  docBtn.classList.toggle('on',  mode === 'doc');
-}
-
-function toggleOptional() {
-  const fields = document.getElementById('optional-fields');
-  const arrow  = document.getElementById('opt-arrow');
-  if(!fields) return;
-  const isOn = fields.classList.toggle('on');
-  if(arrow) arrow.textContent = isOn ? '▼' : '▶';
-}
-
-async function extractFromPaste() {
-  const pasteEl = document.getElementById('f-paste');
-  const text = pasteEl ? pasteEl.value.trim() : '';
-  if(!text) { showToast('Paste some text first'); return; }
-
-  const panel   = document.getElementById('ai-panel-doc');
-  const content = document.getElementById('ai-doc-content');
-  if(panel) panel.classList.add('on');
-  if(content) content.innerHTML = '<span class="typing"></span>';
-
-  const prompt = 'NEBCM AI: extract business info and return ONLY valid JSON. Keys: name, sub (max 10 words), desc, track (Track A/B/C/D), status (active/building/ready/pivot/validation/concept), engine (Engine 1/2/3/4), viability 0-100, ops 0-100, demand 0-100, scale 0-100, insights (3 strings), actions (3 strings). Text: ' + text;
-
-
-
-
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], max_tokens: 700 })
-    });
-    const data = await res.json();
-    const raw = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : '';
-
-    let parsed = null;
-    try {
-      const start = raw.indexOf('{');
-      const end   = raw.lastIndexOf('}');
-      if(start !== -1 && end !== -1) {
-        parsed = JSON.parse(raw.slice(start, end + 1));
-      }
-    } catch(parseErr) {
-      if(content) content.textContent = 'Could not parse response. Try rephrasing your notes.';
-      return;
-    }
-
-    if(!parsed) {
-      if(content) content.textContent = 'No structured data found. Try again.';
-      return;
-    }
-
-    aiFillData = parsed;
-    switchMode('form');
-
-    if(parsed.name) document.getElementById('f-name').value = parsed.name;
-    if(parsed.sub)  document.getElementById('f-sub').value  = parsed.sub;
-    if(parsed.desc) document.getElementById('f-desc').value = parsed.desc;
-
-    const trackMap = {
-      'Track A - Active Operations':       'Track A — Active Operations',
-      'Track B - NEBCM Digital':           'Track B — NEBCM Digital',
-      'Track C - Ideas in Validation':     'Track C — Ideas in Validation',
-      'Track D - Morocco to International':'Track D — Morocco to International'
-    };
-    if(parsed.track && trackMap[parsed.track]) {
-      document.getElementById('f-track').value = trackMap[parsed.track];
-    }
-    if(parsed.status) document.getElementById('f-status').value = parsed.status;
-
-    const engineMap = {
-      'Engine 1 - Process':  'Engine 1 — Process',
-      'Engine 2 - Talk':     'Engine 2 — Talk',
-      'Engine 3 - Series':   'Engine 3 — Series',
-      'Engine 4 - Platform': 'Engine 4 — Platform'
-    };
-    if(parsed.engine && engineMap[parsed.engine]) {
-      document.getElementById('f-engine').value = engineMap[parsed.engine];
-    }
-
-    if(parsed.viability) {
-      const avg = Math.round(((parsed.viability||70)+(parsed.ops||70)+(parsed.demand||70)+(parsed.scale||70))/4);
-      document.getElementById('f-score').value = avg;
-    }
-
-    const optFields = document.getElementById('optional-fields');
-    const optArrow  = document.getElementById('opt-arrow');
-    if(optFields) { optFields.classList.add('on'); }
-    if(optArrow)  { optArrow.textContent = '▼'; }
-
-    showToast('Fields extracted. Review and click Add to Portfolio.', 'ok');
-
-  } catch(e) {
-    if(content) content.textContent = 'Error: ' + e.message;
-  }
-}
-
-async function aiDeduceAndAdd() {
-  const name = document.getElementById('f-name').value.trim();
-  const desc = document.getElementById('f-desc').value.trim();
-  if(!name) { showToast('Business name is required'); return; }
-
-  const panel   = document.getElementById('ai-panel');
-  const content = document.getElementById('ai-content');
-  if(panel) panel.classList.add('on');
-  if(content) content.innerHTML = '<span class="typing"></span>';
-
-  const sub    = document.getElementById('f-sub').value.trim();
-  const track  = document.getElementById('f-track').value;
-  const status = document.getElementById('f-status').value;
-  const engine = document.getElementById('f-engine').value;
-  const score  = document.getElementById('f-score').value;
-
-  const prompt = 'NEBCM AI: fill missing fields and return ONLY valid JSON. Keys: sub, track (Track A/B/C/D), status (active/building/ready/pivot/validation/concept), engine (Engine 1/2/3/4), viability 0-100, ops 0-100, demand 0-100, scale 0-100, insights (3 strings), actions (3 strings), analysis (2 sentences). Name: ' + name + ' Description: ' + (desc||'not provided') + ' Track: ' + (track||'not set') + ' Status: ' + (status||'not set');
-
-
-
-
-
-
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: [{ role: 'user', content: prompt }], max_tokens: 600 })
-    });
-    const data = await res.json();
-    const raw = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : '';
-
-    let parsed = null;
-    try {
-      const start = raw.indexOf('{');
-      const end   = raw.lastIndexOf('}');
-      if(start !== -1 && end !== -1) {
-        parsed = JSON.parse(raw.slice(start, end + 1));
-      }
-    } catch(e2) {
-      if(content) content.textContent = 'Could not parse AI response. Try again.';
-      return;
-    }
-
-    if(!parsed) {
-      if(content) content.textContent = 'No data returned. Try again.';
-      return;
-    }
-
-    aiFillData = parsed;
-    aiFillData.name = name;
-    aiFillData.desc = desc;
-
-    const trackMap = {
-      'Track A - Active Operations':       'Track A — Active Operations',
-      'Track B - NEBCM Digital':           'Track B — NEBCM Digital',
-      'Track C - Ideas in Validation':     'Track C — Ideas in Validation',
-      'Track D - Morocco to International':'Track D — Morocco to International'
-    };
-    const engineMap = {
-      'Engine 1 - Process':  'Engine 1 — Process',
-      'Engine 2 - Talk':     'Engine 2 — Talk',
-      'Engine 3 - Series':   'Engine 3 — Series',
-      'Engine 4 - Platform': 'Engine 4 — Platform'
-    };
-
-    if(!sub && parsed.sub)    document.getElementById('f-sub').value = parsed.sub;
-    if(!track && parsed.track && trackMap[parsed.track])   document.getElementById('f-track').value = trackMap[parsed.track];
-    if(!status && parsed.status) document.getElementById('f-status').value = parsed.status;
-    if(!engine && parsed.engine && engineMap[parsed.engine]) document.getElementById('f-engine').value = engineMap[parsed.engine];
-    if(!score && parsed.viability) {
-      const avg = Math.round(((parsed.viability||70)+(parsed.ops||70)+(parsed.demand||70)+(parsed.scale||70))/4);
-      document.getElementById('f-score').value = avg;
-    }
-
-    const optFields = document.getElementById('optional-fields');
-    const optArrow  = document.getElementById('opt-arrow');
-    if(optFields) optFields.classList.add('on');
-    if(optArrow)  optArrow.textContent = '▼';
-
-    if(content) content.textContent = (parsed.analysis || 'Fields filled. Review and click Add to Portfolio.');
-
-  } catch(e) {
-    if(content) content.textContent = 'Error: ' + e.message;
-  }
-}
+function closeAdd() { document.getElementById('add-modal').classList.remove('open'); }
 
 async function submitIdea() {
   const name = document.getElementById('f-name').value.trim();
-  const sub  = document.getElementById('f-sub').value.trim();
-  if(!name) { showToast('Business name is required'); return; }
-  if(!sub)  { showToast('Short description is required'); return; }
-  const score = parseInt(document.getElementById('f-score').value) || 70;
-  const d     = aiFillData || {};
+  const sub = document.getElementById('f-sub').value.trim();
+  if(!name||!sub) { showToast('Name and description required'); return; }
+  const score = parseInt(document.getElementById('f-score').value)||70;
   const newBiz = {
-    id: 'biz_' + Date.now(),
-    name: name,
-    sub:  sub,
-    status: document.getElementById('f-status').value || d.status || 'concept',
-    track:  document.getElementById('f-track').value  || d.track  || 'Track C — Ideas in Validation',
-    engine: document.getElementById('f-engine').value || d.engine || 'Engine 2 — Talk',
-    score: {
-      viability: d.viability || score,
-      ops:       d.ops       || score,
-      demand:    d.demand    || score,
-      scale:     d.scale     || score
-    },
-    insights: d.insights || [document.getElementById('f-desc').value || 'Added via Command Center'],
-    actions:  d.actions  || ['Define strategy', 'Build content plan', 'Run Phase 0'],
-    notes:    document.getElementById('f-desc').value || d.desc || '',
-    content_days: 0
+    id: 'biz_'+Date.now(),
+    name, sub,
+    status: document.getElementById('f-status').value,
+    track: document.getElementById('f-track').value,
+    engine: document.getElementById('f-engine').value,
+    score: { viability:score, ops:score, demand:score, scale:score },
+    insights: [document.getElementById('f-desc').value||'Added via Command Center'],
+    actions: ['Define strategy','Build content plan','Run Phase 0'],
+    notes: '',
+    content_days: 0,
   };
   const ok = await upsertBusiness(newBiz);
   if(ok) {
@@ -1236,7 +994,120 @@ async function submitIdea() {
     closeAdd();
     renderDashboard();
     showToast(name + ' added to portfolio', 'ok');
-    aiFillData = null;
+  }
+}
+
+async function analyzeIdea() {
+  const name = document.getElementById('f-name').value.trim();
+  const desc = document.getElementById('f-desc').value.trim();
+  if(!name&&!desc) { showToast('Add name and description first'); return; }
+  const panel = document.getElementById('ai-panel');
+  const content = document.getElementById('ai-content');
+  panel.classList.add('on');
+  content.innerHTML = '<span class="typing"></span>';
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: `NEBCM analysis for Morocco-based entrepreneur:\n\nBusiness: ${name}\nDescription: ${desc}\n\nGive: (1) Viability 0-100, (2) Scalability 0-100, (3) Morocco advantage or risk, (4) Top 3 risks, (5) First 3 actions. Be specific and brief.` }],
+        max_tokens: 400,
+      }),
+    });
+    const data = await res.json();
+    content.textContent = data.content?.[0]?.text || data.error || 'Analysis failed.';
+  } catch(e) {
+    content.textContent = 'Error: ' + e.message;
+  }
+}
+
+
+// ─── SCORE ANALYSIS ───────────────────────────────────────────────────────────
+async function analyzeScores(id) {
+  const b = BUSINESSES.find(function(x) { return x.id === id; });
+  if(!b) return;
+  const btn     = document.getElementById('abtn-' + id);
+  const panel   = document.getElementById('sa-' + id);
+  const contentEl = document.getElementById('sa-content-' + id);
+  if(btn) { btn.disabled = true; btn.textContent = 'Analyzing...'; }
+  if(panel) panel.classList.add('on');
+  if(contentEl) contentEl.innerHTML = '<span class="typing"></span>';
+
+  const sys = [
+    'You are a ruthlessly specific business analyst with deep expertise in Morocco and emerging markets.',
+    'You know: Moroccan consumer purchasing power (avg 3,000-6,000 MAD/month in Agadir/Souss-Massa),',
+    'Morocco social media penetration (TikTok, Instagram, Facebook dominant), Moroccan SMB landscape,',
+    'local ecommerce barriers (CMI payment trust issues, cash-on-delivery preference),',
+    'Morocco tourism economy, textile export sector, real estate market dynamics,',
+    'food & beverage sector in Agadir, and the specific regulatory friction (permits, Patente, RC).',
+    'You also deeply understand: DTC brand building, content monetization, AI-powered services, and arbitrage businesses.',
+    'When you give scores, cite REAL comparable benchmarks.',
+    'Be brutally specific - name actual competitors, actual market sizes, actual Morocco-specific risks.',
+    'Zero generic advice. Every sentence must be specific to THIS business in THIS exact market context.',
+    'Respond ONLY with a valid JSON object. No markdown. No explanation outside the JSON.',
+    'Keys: viability_why (2 specific sentences), ops_why (2 specific sentences),',
+    'demand_why (2 specific sentences), scale_why (2 specific sentences),',
+    'verdict (1 sentence - the single most important truth about this business right now).'
+  ].join(' ');
+
+  const msg = [
+    'Score analysis request.',
+    'Business: ' + b.name + '.',
+    'One-liner: ' + b.sub + '.',
+    'Track: ' + (b.track || 'unknown') + '.',
+    'Status: ' + (b.status || 'unknown') + '.',
+    'Engine: ' + (b.engine || 'unknown') + '.',
+    'Viability: ' + (b.score && b.score.viability ? b.score.viability : 70) + '/100.',
+    'Ops: ' + (b.score && b.score.ops ? b.score.ops : 70) + '/100.',
+    'Demand: ' + (b.score && b.score.demand ? b.score.demand : 70) + '/100.',
+    'Scale: ' + (b.score && b.score.scale ? b.score.scale : 70) + '/100.',
+    'Key insights: ' + (b.insights ? b.insights.join('; ') : 'none') + '.',
+    'Notes: ' + (b.notes || 'none') + '.'
+  ].join(' ');
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system: sys, messages: [{ role: 'user', content: msg }], max_tokens: 700 })
+    });
+    const data = await res.json();
+    const raw = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : '';
+    var parsed = null;
+    try {
+      var s = raw.indexOf('{');
+      var e = raw.lastIndexOf('}');
+      if(s !== -1 && e !== -1) parsed = JSON.parse(raw.slice(s, e + 1));
+    } catch(pe) {
+      if(contentEl) contentEl.textContent = raw || 'Could not parse.';
+      if(btn) { btn.disabled = false; btn.textContent = 'Retry Analysis'; }
+      return;
+    }
+    if(!parsed) {
+      if(contentEl) contentEl.textContent = 'No data returned.';
+      if(btn) { btn.disabled = false; btn.textContent = 'Retry Analysis'; }
+      return;
+    }
+    var sv = b.score && b.score.viability ? b.score.viability : 70;
+    var so = b.score && b.score.ops ? b.score.ops : 70;
+    var sd = b.score && b.score.demand ? b.score.demand : 70;
+    var ss = b.score && b.score.scale ? b.score.scale : 70;
+    var html = [
+      ['VIABILITY ' + sv, scoreColor(sv), parsed.viability_why],
+      ['OPS ' + so,       scoreColor(so), parsed.ops_why],
+      ['DEMAND ' + sd,    scoreColor(sd), parsed.demand_why],
+      ['SCALE ' + ss,     scoreColor(ss), parsed.scale_why]
+    ].map(function(r) {
+      return '<div class="srow"><span class="srow-lbl" style="color:' + r[1] + '">' + r[0] + '</span><span class="srow-txt">' + (r[2] || '') + '</span></div>';
+    }).join('');
+    if(parsed.verdict) {
+      html += '<div class="verdict-box">' + parsed.verdict + '</div>';
+    }
+    if(contentEl) contentEl.innerHTML = html;
+    if(btn) { btn.disabled = false; btn.textContent = 'Re-analyze'; }
+  } catch(err) {
+    if(contentEl) contentEl.textContent = 'Error: ' + err.message;
+    if(btn) { btn.disabled = false; btn.textContent = 'Retry'; }
   }
 }
 

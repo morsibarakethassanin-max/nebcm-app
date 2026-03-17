@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEBCM Command Center</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a09;--bg1:#111110;--bg2:#1a1a18;--bg3:#242422;
+  --border:#2a2a27;--border2:#383835;
+  --text:#e8e6df;--text2:#9a9890;--text3:#5a5955;
+  --amber:#e8a020;--amber-dim:#7a5010;--amber-bg:#1e1508;
+  --teal:#2db88a;--teal-dim:#0d5a40;--teal-bg:#081a12;
+  --coral:#e06040;--coral-dim:#6a2515;--coral-bg:#1a0a05;
+  --purple:#8878e8;--purple-dim:#382e78;--purple-bg:#100e20;
+  --blue:#4090d8;--blue-dim:#183858;--blue-bg:#080e18;
+  --green:#50a855;--green-bg:#081408;
+  --ff:'Syne',sans-serif;--fm:'DM Mono',monospace;--r:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--ff);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:0.5px solid var(--border);background:var(--bg1);position:sticky;top:0;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.logo{font-size:13px;font-weight:800;letter-spacing:.12em;color:var(--amber);font-family:var(--fm)}
+.topbar-div{width:0.5px;height:16px;background:var(--border2)}
+.topbar-sub{font-size:12px;color:var(--text2);font-family:var(--fm)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.live-lbl{font-size:11px;font-family:var(--fm);color:var(--teal)}
+.clock{font-size:11px;font-family:var(--fm);color:var(--text3)}
+.pin-btn{font-family:var(--fm);font-size:11px;padding:5px 12px;border-radius:5px;cursor:pointer;border:0.5px solid var(--border2);background:transparent;color:var(--text2);transition:all .12s}
+.pin-btn:hover{border-color:var(--amber-dim);color:var(--amber)}
+.pin-btn.active{background:var(--amber-bg);border-color:var(--amber-dim);color:var(--amber)}
+
+/* SHELL */
+.shell{display:flex;height:calc(100vh - 49px)}
+
+/* SIDEBAR */
+.sidebar{width:196px;flex-shrink:0;border-right:0.5px solid var(--border);background:var(--bg1);padding:18px 0;display:flex;flex-direction:column;gap:1px}
+.nav-sec{font-size:9px;font-family:var(--fm);letter-spacing:.12em;color:var(--text3);padding:0 16px;margin-bottom:3px;margin-top:14px;text-transform:uppercase}
+.nav-sec:first-child{margin-top:0}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;cursor:pointer;transition:background .12s;border-left:2px solid transparent;font-size:12px;color:var(--text2);font-family:var(--fm);user-select:none}
+.nav-item:hover{background:var(--bg2);color:var(--text)}
+.nav-item.active{background:var(--bg2);color:var(--amber);border-left-color:var(--amber)}
+.nav-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:24px 28px}
+.view{display:none}.view.active{display:block}
+
+/* PAGE HDR */
+.page-hdr{margin-bottom:22px}
+.page-title{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px}
+.page-sub{font-size:12px;color:var(--text2);font-family:var(--fm)}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px}
+.stat-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.stat-lbl{font-size:10px;font-family:var(--fm);color:var(--text3);letter-spacing:.06em;margin-bottom:6px;text-transform:uppercase}
+.stat-val{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.stat-sub{font-size:11px;color:var(--text2);margin-top:2px;font-family:var(--fm)}
+
+/* SEC LABEL */
+.sec-lbl{font-size:10px;font-family:var(--fm);letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px;margin-top:20px}
+.sec-lbl:first-child{margin-top:0}
+
+/* PROJECT GRID + CARDS */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.pcard{background:var(--bg1);border:0.5px solid var(--border);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:border-color .15s,transform .1s;position:relative;overflow:hidden}
+.pcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--card-accent,var(--border));transition:width .15s}
+.pcard:hover{border-color:var(--border2);transform:translateY(-1px)}
+.pcard:hover::before{width:3px}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.card-name{font-size:14px;font-weight:700;letter-spacing:-.01em}
+.card-sub{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4}
+.badge{font-family:var(--fm);font-size:10px;padding:3px 7px;border-radius:4px;font-weight:500;flex-shrink:0;white-space:nowrap}
+.b-active{background:var(--teal-bg);color:var(--teal);border:0.5px solid var(--teal-dim)}
+.b-building{background:var(--purple-bg);color:var(--purple);border:0.5px solid var(--purple-dim)}
+.b-pivot{background:var(--coral-bg);color:var(--coral);border:0.5px solid var(--coral-dim)}
+.b-concept{background:var(--bg3);color:var(--text2);border:0.5px solid var(--border2)}
+.b-validation{background:var(--blue-bg);color:var(--blue);border:0.5px solid var(--blue-dim)}
+.b-ready{background:var(--amber-bg);color:var(--amber);border:0.5px solid var(--amber-dim)}
+.score-row{display:flex;align-items:center;gap:8px;margin-top:10px}
+.score-track{flex:1;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.score-fill{height:100%;border-radius:2px}
+.score-val{font-family:var(--fm);font-size:11px;font-weight:500;width:26px;text-align:right}
+
+/* REALTIME PULSE on card */
+@keyframes rtpulse{0%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}100%{opacity:0;transform:scale(2)}}
+.rt-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);position:absolute;top:10px;right:10px;animation:rtpulse 1s ease-out forwards}
+
+/* DETAIL PANEL */
+.detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:flex-start;justify-content:flex-end}
+.detail-overlay.open{display:flex}
+.detail-panel{width:440px;height:100vh;background:var(--bg1);border-left:0.5px solid var(--border);overflow-y:auto;padding:24px;animation:slideIn .2s ease}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
+.det-close{float:right;cursor:pointer;font-size:13px;color:var(--text3);background:var(--bg2);border:0.5px solid var(--border);border-radius:5px;padding:4px 9px;font-family:var(--fm)}
+.det-close:hover{color:var(--text)}
+.det-name{font-size:20px;font-weight:800;letter-spacing:-.02em;margin:10px 0 4px}
+.det-track{font-family:var(--fm);font-size:11px;color:var(--text2);margin-bottom:16px}
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.metric{background:var(--bg2);border-radius:6px;padding:10px}
+.metric-l{font-size:9px;font-family:var(--fm);color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.metric-v{font-size:18px;font-weight:700}
+.insight-list{list-style:none;display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.insight-item{display:flex;gap:8px;font-size:12px;line-height:1.5;color:var(--text2)}
+.i-arrow{color:var(--amber);flex-shrink:0}
+.action-row{display:flex;gap:6px;flex-wrap:wrap}
+.abtn{font-family:var(--fm);font-size:11px;padding:6px 10px;border:0.5px solid var(--border2);border-radius:5px;cursor:pointer;background:transparent;color:var(--text);transition:background .12s}
+.abtn:hover{background:var(--bg2)}
+.abtn.primary{background:var(--amber-bg);border-color:var(--amber-dim);color:var(--amber)}
+.det-div{height:0.5px;background:var(--border);margin:14px 0}
+.det-sec{font-size:10px;font-family:var(--fm);color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.locked-msg{font-size:11px;font-family:var(--fm);color:var(--text3);padding:6px 0}
+
+/* STATUS SELECT + NOTES */
+.status-select{background:var(--bg2);border:0.5px solid var(--border2);border-radius:5px;color:var(--text);font-family:var(--fm);font-size:11px;padding:5px 10px;outline:none;cursor:pointer}
+.notes-area{width:100%;background:var(--bg2);border:0.5px solid var(--border);border-radius:6px;padding:10px 12px;color:var(--text);font-family:var(--fm);font-size:12px;resize:vertical;min-height:80px;outline:none;transition:border-color .15s}
+.notes-area:focus{border-color:var(--border2)}
+.save-btn{margin-top:8px;font-family:var(--fm);font-size:11px;padding:6px 14px;border:0.5px solid var(--teal-dim);border-radius:5px;cursor:pointer;background:var(--teal-bg);color:var(--teal);transition:background .12s}
+.save-btn:hover{background:var(--teal-dim)}
+
+/* CONTENT TRACKER */
+.ctable{background:var(--bg1);border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden}
+.crow{display:grid;grid-template-columns:1.6fr 1fr 1.2fr 80px 80px;border-bottom:0.5px solid var(--border)}
+.crow:last-child{border-bottom:none}
+.ccell{padding:10px 12px;font-size:12px;font-family:var(--fm)}
+.chdr .ccell{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;background:var(--bg2)}
+.bar-outer{height:4px;background:var(--bg3);border-radius:2px;margin-top:4px}
+.bar-inner{height:100%;border-radius:2px}
+
+/* WEEKLY */
+.wgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:20px}
+.wday{background:var(--bg2);border:0.5px solid var(--border);border-radius:6px;padding:10px;min-height:100px}
+.wday-hdr{font-size:10px;font-family:var(--fm);color:var(--text3);margin-bottom:6px}
+.wday.today{border-color:var(--amber-dim)}
+.wday.today .wday-hdr{color:var(--amber)}
+.wtask{font-size:10px;background:var(--bg3);border-radius:3px;padding:3px 6px;margin-bottom:3px;color:var(--text2);line-height:1.3}
+.wtask.film{background:var(--amber-bg);color:var(--amber)}
+.wtask.edit{background:var(--teal-bg);color:var(--teal)}
+.wtask.post{background:var(--blue-bg);color:var(--blue)}
+
+/* ACTIVITY FEED */
+.feed{display:flex;flex-direction:column;gap:6px}
+.feed-item{display:flex;gap:10px;align-items:flex-start;padding:8px 12px;background:var(--bg2);border-radius:6px;font-size:12px}
+.feed-time{font-family:var(--fm);font-size:10px;color:var(--text3);flex-shrink:0;margin-top:1px;width:60px}
+.feed-text{color:var(--text2);line-height:1.4}
+.feed-brand{color:var(--amber);font-weight:600}
+
+/* AI CHAT */
+.chat-wrap{max-width:660px}
+.chat-msgs{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;max-height:420px;overflow-y:auto;padding-right:4px}
+.msg{padding:12px 14px;border-radius:8px;font-size:13px;line-height:1.6}
+.msg.user{background:var(--bg3);align-self:flex-end;max-width:80%}
+.msg.ai{background:var(--purple-bg);border:0.5px solid var(--purple-dim);align-self:flex-start;max-width:90%;font-family:var(--fm)}
+.msg.sys{background:var(--bg2);color:var(--text3);font-size:11px;font-family:var(--fm);text-align:center}
+.chat-row{display:flex;gap:8px}
+.chat-in{flex:1;background:var(--bg2);border:0.5px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-size:13px;outline:none;font-family:var(--fm);transition:border-color .15s}
+.chat-in:focus{border-color:var(--purple-dim)}
+.chat-send{background:var(--purple-bg);border:0.5px solid var(--purple-dim);border-radius:6px;color:var(--purple);font-family:var(--fm);font-size:12px;padding:10px 16px;cursor:pointer;transition:background .12s;white-space:nowrap}
+.chat-send:hover{background:var(--purple-dim)}
+.typing{color:var(--purple);font-family:var(--fm);font-size:13px}
+.typing::after{content:'▋';animation:blink .7s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ADD MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:300;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg1);border:0.5px solid var(--border2);border-radius:12px;width:560px;max-height:90vh;overflow-y:auto;padding:28px;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-title{font-size:18px;font-weight:800;letter-spacing:-.02em;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.modal-x{cursor:pointer;color:var(--text3);font-family:var(--fm);font-size:12px}
+.modal-x:hover{color:var(--text)}
+.fgroup{margin-bottom:14px}
+.flabel{font-size:10px;font-family:var(--fm);color:var(--text2);margin-bottom:5px;display:block;letter-spacing:.04em;text-transform:uppercase}
+.finput{width:100%;background:var(--bg2);border:0.5px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--text);font-family:var(--fm);font-size:13px;outline:none;transition:border-color .15s}
+.finput:focus{border-color:var(--amber-dim)}
+.finput::placeholder{color:var(--text3)}
+.ftextarea{min-height:72px;resize:vertical}
+.fselect{width:100%;background:var(--bg2);border:0.5px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--text);font-family:var(--fm);font-size:13px;outline:none;cursor:pointer}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-footer{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+.mbtn{font-family:var(--fm);font-size:12px;padding:9px 18px;border-radius:6px;cursor:pointer;transition:background .12s;border:0.5px solid transparent}
+.mbtn.cancel{background:var(--bg2);border-color:var(--border2);color:var(--text2)}
+.mbtn.cancel:hover{color:var(--text)}
+.mbtn.submit{background:var(--amber-bg);border-color:var(--amber-dim);color:var(--amber);font-weight:600}
+.mbtn.submit:hover{background:var(--amber-dim)}
+.mbtn.ai{background:var(--purple-bg);border-color:var(--purple-dim);color:var(--purple)}
+.mbtn.ai:hover{background:var(--purple-dim)}
+.ai-panel{background:var(--purple-bg);border:0.5px solid var(--purple-dim);border-radius:8px;padding:14px;margin-top:14px;font-size:12px;line-height:1.6;color:var(--text);display:none;font-family:var(--fm)}
+.ai-panel.on{display:block}
+.ai-panel-hdr{font-size:10px;color:var(--purple);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+
+/* PIN MODAL */
+.pin-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:400;display:none;align-items:center;justify-content:center}
+.pin-overlay.open{display:flex}
+.pin-box{background:var(--bg1);border:0.5px solid var(--border2);border-radius:12px;padding:32px;text-align:center;width:320px}
+.pin-title{font-size:16px;font-weight:700;margin-bottom:6px}
+.pin-sub{font-size:12px;color:var(--text2);font-family:var(--fm);margin-bottom:20px}
+.pin-dots{display:flex;gap:10px;justify-content:center;margin-bottom:20px}
+.pin-dot-d{width:14px;height:14px;border-radius:50%;border:0.5px solid var(--border2);background:transparent;transition:background .12s}
+.pin-dot-d.filled{background:var(--amber);border-color:var(--amber)}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:200px;margin:0 auto}
+.pkey{background:var(--bg2);border:0.5px solid var(--border);border-radius:8px;padding:14px;font-size:16px;font-weight:700;cursor:pointer;transition:background .12s;font-family:var(--fm)}
+.pkey:hover{background:var(--bg3)}
+.pkey.del{color:var(--coral)}
+.pin-error{font-size:11px;color:var(--coral);font-family:var(--fm);margin-top:10px;min-height:16px}
+.pin-hint{font-size:10px;color:var(--text3);font-family:var(--fm);margin-top:16px}
+
+/* SETUP SCREEN */
+.setup-screen{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0}
+.setup-box{background:var(--bg1);border:0.5px solid var(--border2);border-radius:14px;padding:40px;width:520px;max-width:90vw}
+.setup-title{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px;color:var(--amber)}
+.setup-sub{font-size:13px;color:var(--text2);font-family:var(--fm);margin-bottom:28px;line-height:1.6}
+.setup-step{font-size:10px;font-family:var(--fm);color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;margin-top:22px}
+.setup-step:first-of-type{margin-top:0}
+.sgroup{margin-bottom:12px}
+.setup-note{font-size:11px;color:var(--text3);font-family:var(--fm);margin-top:5px;line-height:1.5}
+.setup-btn{width:100%;background:var(--amber);color:var(--bg);border:none;border-radius:8px;padding:13px;font-family:var(--fm);font-size:13px;font-weight:700;cursor:pointer;margin-top:20px;transition:opacity .15s}
+.setup-btn:hover{opacity:.88}
+
+/* FAB */
+.fab{position:fixed;bottom:28px;right:28px;background:var(--amber);color:var(--bg);border:none;border-radius:50px;padding:12px 22px;font-family:var(--fm);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(232,160,32,.25);transition:transform .15s,box-shadow .15s;z-index:50}
+.fab:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(232,160,32,.35)}
+.fab.locked{background:var(--bg3);color:var(--text3);box-shadow:none;cursor:default}
+.fab.locked:hover{transform:none}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;right:28px;background:var(--bg2);border:0.5px solid var(--border2);border-radius:8px;padding:11px 16px;font-family:var(--fm);font-size:12px;color:var(--text);z-index:400;transform:translateY(10px);opacity:0;transition:all .2s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:var(--teal-dim);color:var(--teal)}
+
+/* LOADING */
+.loading{text-align:center;padding:60px 20px;color:var(--text3);font-family:var(--fm);font-size:13px}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* SEARCH + FILTER */
+.search-bar{background:var(--bg2);border:0.5px solid var(--border);border-radius:6px;padding:8px 14px;color:var(--text);font-family:var(--fm);font-size:12px;width:220px;outline:none;margin-bottom:14px;transition:border-color .15s}
+.search-bar:focus{border-color:var(--border2)}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.fchip{font-family:var(--fm);font-size:10px;padding:4px 10px;border-radius:4px;border:0.5px solid var(--border);cursor:pointer;color:var(--text2);background:transparent;transition:all .12s}
+.fchip:hover,.fchip.on{border-color:var(--amber-dim);color:var(--amber);background:var(--amber-bg)}
+.empty{text-align:center;padding:48px 20px;color:var(--text3);font-family:var(--fm);font-size:13px}
+
+/* TIER */
+.tier-badge{display:inline-block;font-family:var(--fm);font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;margin-left:8px}
+.t-unicorn{background:var(--teal-bg);color:var(--teal)}
+.t-great{background:var(--blue-bg);color:var(--blue)}
+.t-good{background:var(--amber-bg);color:var(--amber)}
+.t-trash{background:var(--coral-bg);color:var(--coral)}
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN (shown on first visit) -->
+<div class="setup-screen" id="setup-screen" style="display:none">
+  <div class="setup-box">
+    <div class="setup-title">NEBCM Command Center</div>
+    <div class="setup-sub">First-time setup. You only do this once.<br>Connect your Supabase database and set your admin PIN.</div>
+
+    <div class="setup-step">Step 1 — Supabase connection</div>
+    <div class="sgroup">
+      <div class="flabel">Supabase Project URL</div>
+      <input class="finput" id="setup-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
+      <div class="setup-note">Found in Supabase Dashboard → Settings → API → Project URL</div>
+    </div>
+    <div class="sgroup">
+      <div class="flabel">Supabase Anon Key</div>
+      <input class="finput" id="setup-anon" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+      <div class="setup-note">Found in Supabase Dashboard → Settings → API → anon public key</div>
+    </div>
+
+    <div class="setup-step">Step 2 — Admin PIN (4 digits)</div>
+    <div class="sgroup">
+      <div class="flabel">Your PIN</div>
+      <input class="finput" id="setup-pin" type="password" maxlength="4" placeholder="4 digits — you'll use this to edit">
+      <div class="setup-note">Team members can view without a PIN. Only you need this to add/edit businesses.</div>
+    </div>
+
+    <div class="setup-step">Step 3 — Your name (optional)</div>
+    <div class="sgroup">
+      <input class="finput" id="setup-name" placeholder="Founder name (shown in the header)">
+    </div>
+
+    <button class="setup-btn" onclick="completeSetup()">Launch Command Center</button>
+    <div id="setup-error" style="font-size:11px;color:var(--coral);font-family:var(--fm);margin-top:10px;text-align:center"></div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar" id="topbar" style="display:none">
+  <div class="topbar-left">
+    <span class="logo">NEBCM</span>
+    <div class="topbar-div"></div>
+    <span class="topbar-sub">Command Center</span>
+  </div>
+  <div class="topbar-right">
+    <div class="live-dot"></div>
+    <span class="live-lbl" id="sync-lbl">LIVE</span>
+    <span class="clock" id="clock"></span>
+    <button class="pin-btn" id="pin-btn" onclick="openPinModal()">
+      <span id="pin-btn-lbl">Unlock Edit</span>
+    </button>
+  </div>
+</div>
+
+<div class="shell" id="shell" style="display:none">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="nav-sec">Overview</div>
+    <div class="nav-item active" data-view="dashboard" onclick="nav('dashboard')"><div class="nav-dot" style="background:var(--amber)"></div>Dashboard</div>
+    <div class="nav-item" data-view="portfolio" onclick="nav('portfolio')"><div class="nav-dot" style="background:var(--teal)"></div>Portfolio</div>
+    <div class="nav-sec">Operations</div>
+    <div class="nav-item" data-view="content" onclick="nav('content')"><div class="nav-dot" style="background:var(--blue)"></div>Content Buffer</div>
+    <div class="nav-item" data-view="weekly" onclick="nav('weekly')"><div class="nav-dot" style="background:var(--purple)"></div>Weekly Plan</div>
+    <div class="nav-item" data-view="activity" onclick="nav('activity')"><div class="nav-dot" style="background:var(--green)"></div>Activity Feed</div>
+    <div class="nav-sec">AI Tools</div>
+    <div class="nav-item" data-view="advisor" onclick="nav('advisor')"><div class="nav-dot" style="background:var(--coral)"></div>AI Advisor</div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div class="page-hdr">
+        <div class="page-title">Mission Control</div>
+        <div class="page-sub" id="dash-sub">Loading...</div>
+      </div>
+      <div class="stats-row" id="stats-row"><div class="loading"><div class="spinner"></div>Loading data...</div></div>
+      <div id="dash-content"></div>
+    </div>
+
+    <!-- PORTFOLIO -->
+    <div class="view" id="view-portfolio">
+      <div class="page-hdr"><div class="page-title">Full Portfolio</div><div class="page-sub">All businesses across all tracks</div></div>
+      <input class="search-bar" placeholder="Search..." id="port-search" oninput="filterPortfolio()">
+      <div class="filter-row" id="port-filters"></div>
+      <div id="port-content"></div>
+    </div>
+
+    <!-- CONTENT BUFFER -->
+    <div class="view" id="view-content">
+      <div class="page-hdr"><div class="page-title">Content Buffer</div><div class="page-sub">Days of queued content per brand · 8 brands · 24 posts/day</div></div>
+      <div class="ctable" id="ctable"></div>
+    </div>
+
+    <!-- WEEKLY -->
+    <div class="view" id="view-weekly">
+      <div class="page-hdr"><div class="page-title">Weekly Plan</div><div class="page-sub">Current week · Ziyad's schedule</div></div>
+      <div class="wgrid" id="wgrid"></div>
+      <div class="sec-lbl">Cycle health</div>
+      <div id="cycle-health"></div>
+    </div>
+
+    <!-- ACTIVITY FEED -->
+    <div class="view" id="view-activity">
+      <div class="page-hdr"><div class="page-title">Activity Feed</div><div class="page-sub">Recent updates across all businesses</div></div>
+      <div class="feed" id="feed-list"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- AI ADVISOR -->
+    <div class="view" id="view-advisor">
+      <div class="page-hdr"><div class="page-title">AI Advisor</div><div class="page-sub">Claude Haiku · Context-aware strategy assistant</div></div>
+      <div class="chat-wrap">
+        <div class="chat-msgs" id="chat-msgs">
+          <div class="msg sys">AI Advisor connected. Ask anything about the NEBCM portfolio.</div>
+        </div>
+        <div class="chat-row">
+          <input class="chat-in" id="chat-in" placeholder="Ask the advisor..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}">
+          <button class="chat-send" onclick="sendChat()">Send</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- DETAIL OVERLAY -->
+<div class="detail-overlay" id="det-overlay" onclick="if(event.target===this)closeDet()">
+  <div class="detail-panel" id="det-panel"></div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="modal-overlay" id="add-modal" onclick="if(event.target===this)closeAdd()">
+  <div class="modal">
+    <div class="modal-title">
+      <span>Add New Business / Idea</span>
+      <span class="modal-x" onclick="closeAdd()">✕ close</span>
+    </div>
+    <div class="frow">
+      <div class="fgroup"><label class="flabel">Business Name *</label><input class="finput" id="f-name" placeholder="e.g. Tirraf Thrift"></div>
+      <div class="fgroup"><label class="flabel">Short Description *</label><input class="finput" id="f-sub" placeholder="e.g. Vintage thrift + rework"></div>
+    </div>
+    <div class="frow">
+      <div class="fgroup"><label class="flabel">Track</label>
+        <select class="fselect" id="f-track">
+          <option value="Track A — Active Operations">Track A — Active</option>
+          <option value="Track B — NEBCM Digital">Track B — Digital</option>
+          <option value="Track C — Ideas in Validation">Track C — Validation</option>
+          <option value="Track D — Morocco to International">Track D — International</option>
+        </select>
+      </div>
+      <div class="fgroup"><label class="flabel">Status</label>
+        <select class="fselect" id="f-status">
+          <option value="active">Active</option>
+          <option value="building">Building</option>
+          <option value="ready">Ready</option>
+          <option value="pivot">Pivoting</option>
+          <option value="validation">Validating</option>
+          <option value="concept">Concept</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fgroup"><label class="flabel">Engine</label>
+        <select class="fselect" id="f-engine">
+          <option value="Engine 1 — Process">Engine 1 — Process</option>
+          <option value="Engine 2 — Talk">Engine 2 — Talk</option>
+          <option value="Engine 3 — Series">Engine 3 — Series</option>
+          <option value="Engine 4 — Platform">Engine 4 — Platform</option>
+        </select>
+      </div>
+      <div class="fgroup"><label class="flabel">NEBCM Score (0-100)</label><input class="finput" id="f-score" type="number" min="0" max="100" placeholder="75"></div>
+    </div>
+    <div class="fgroup"><label class="flabel">Description / Strategy Notes</label><textarea class="finput ftextarea" id="f-desc" placeholder="Concept, target market, revenue model..."></textarea></div>
+    <div class="modal-footer">
+      <button class="mbtn ai" onclick="analyzeIdea()">Analyze with Haiku</button>
+      <div style="display:flex;gap:8px">
+        <button class="mbtn cancel" onclick="closeAdd()">Cancel</button>
+        <button class="mbtn submit" onclick="submitIdea()">Add to Portfolio</button>
+      </div>
+    </div>
+    <div class="ai-panel" id="ai-panel"><div class="ai-panel-hdr">Claude Haiku Analysis</div><div id="ai-content"></div></div>
+  </div>
+</div>
+
+<!-- PIN MODAL -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-box">
+    <div class="pin-title" id="pin-title">Enter Admin PIN</div>
+    <div class="pin-sub" id="pin-sub">4-digit PIN to unlock editing</div>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot-d" id="pd0"></div>
+      <div class="pin-dot-d" id="pd1"></div>
+      <div class="pin-dot-d" id="pd2"></div>
+      <div class="pin-dot-d" id="pd3"></div>
+    </div>
+    <div class="pin-keypad">
+      ${[1,2,3,4,5,6,7,8,9,'','0','⌫'].map(k=>`<button class="pkey${k==='⌫'?' del':''}" onclick="pinKey('${k}')">${k}</button>`).join('')}
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <div class="pin-hint" id="pin-hint">Team members can view everything without a PIN.</div>
+    <button onclick="closePinModal()" style="margin-top:14px;background:none;border:none;color:var(--text3);font-family:var(--fm);font-size:11px;cursor:pointer">Cancel</button>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fab" onclick="openAdd()">
+  <span style="font-size:18px;line-height:1">+</span>
+  New Idea
+</button>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONFIG (injected by Vercel / set during setup) ───────────────────────────
+// These are overridden by the setup flow and stored in localStorage
+let SUPABASE_URL = localStorage.getItem('ncc_url') || '';
+let SUPABASE_KEY = localStorage.getItem('ncc_key') || '';
+let PIN_HASH     = localStorage.getItem('ncc_pin') || '';
+let FOUNDER_NAME = localStorage.getItem('ncc_name') || 'Founder';
+
+let sb = null;       // Supabase client
+let BUSINESSES = []; // local cache
+let isUnlocked = false;
+let activeFilters = new Set();
+let pinBuffer = '';
+
+// ─── SETUP ────────────────────────────────────────────────────────────────────
+async function completeSetup() {
+  const url  = document.getElementById('setup-url').value.trim();
+  const key  = document.getElementById('setup-anon').value.trim();
+  const pin  = document.getElementById('setup-pin').value.trim();
+  const name = document.getElementById('setup-name').value.trim();
+  const err  = document.getElementById('setup-error');
+
+  if(!url || !key) { err.textContent = 'Supabase URL and Anon Key are required.'; return; }
+  if(pin && (pin.length !== 4 || !/^\d{4}$/.test(pin))) { err.textContent = 'PIN must be exactly 4 digits.'; return; }
+
+  err.textContent = 'Connecting...';
+
+  try {
+    const testSb = supabase.createClient(url, key);
+    const { error } = await testSb.from('businesses').select('id').limit(1);
+    if(error && error.code !== 'PGRST116') throw new Error(error.message);
+  } catch(e) {
+    err.textContent = 'Connection failed: ' + e.message + ' — check your URL and key.';
+    return;
+  }
+
+  localStorage.setItem('ncc_url', url);
+  localStorage.setItem('ncc_key', key);
+  localStorage.setItem('ncc_pin', pin ? simpleHash(pin) : '');
+  localStorage.setItem('ncc_name', name || 'Founder');
+  localStorage.setItem('ncc_setup', '1');
+
+  SUPABASE_URL = url;
+  SUPABASE_KEY = key;
+  PIN_HASH = pin ? simpleHash(pin) : '';
+  FOUNDER_NAME = name || 'Founder';
+
+  document.getElementById('setup-screen').style.display = 'none';
+  await initApp();
+}
+
+function simpleHash(str) {
+  let h = 0;
+  for(let i = 0; i < str.length; i++) h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+  return h.toString(36);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+async function initApp() {
+  sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('shell').style.display = 'flex';
+
+  // If no businesses exist yet, seed with defaults
+  await seedIfEmpty();
+  await loadBusinesses();
+  setupRealtime();
+  updateClock();
+  setInterval(updateClock, 1000);
+  renderDashboard();
+  updatePinUI();
+
+  // If no PIN set, unlock by default
+  if(!PIN_HASH) { isUnlocked = true; updatePinUI(); }
+}
+
+async function seedIfEmpty() {
+  const { data } = await sb.from('businesses').select('id').limit(1);
+  if(data && data.length > 0) return;
+
+  const defaults = [
+    {id:'sandwich',name:'Paindwich',sub:'Subway-style takeout · Agadir',status:'ready',track:'Track A — Active Operations',engine:'Engine 3 — Series',score:{viability:70,ops:75,demand:65,scale:80},insights:['Space leased, renovation 90% complete','Awaiting permits — build social following now','Franchise vision: Agadir → national chain'],actions:['Draft launch content brief','Build Instagram presence','Film renovation reality series'],notes:'',content_days:0},
+    {id:'cookie',name:'Sidi Cookie',sub:'American crumble cookies · Delivery',status:'active',track:'Track A — Active Operations',engine:'Engine 1 — Process',score:{viability:82,ops:90,demand:75,scale:70},insights:['Buy wholesale from family, rebrand, run Meta ads','Physical packaging 80% ready','B2B wholesale to cafés is the scale play'],actions:['Finalize packaging','Launch Meta ads'],notes:'',content_days:3},
+    {id:'textiles',name:'SALMH Textiles',sub:'Manufacturing · Workshop · Morocco',status:'pivot',track:'Track A — Active Operations',engine:'Engine 1 — Process',score:{viability:72,ops:65,demand:78,scale:85},insights:['Pivoting to consulting + directories','AI cost reports = new revenue stream'],actions:['Build textile directory MVP','Publish workshop portfolio content'],notes:'',content_days:5},
+    {id:'mzn',name:'MZN Group',sub:'AI-automated digital agency',status:'active',track:'Track A — Active Operations',engine:'Engine 2 — Talk',score:{viability:75,ops:80,demand:82,scale:88},insights:['Reactivate with AI-first positioning','WhatsApp B2B bot handles outreach automatically'],actions:['Activate WhatsApp B2B bot','Run $10 smoke test','Onboard 3 pilot clients'],notes:'',content_days:4},
+    {id:'safar',name:'SAFAR World Guides',sub:'10-country travel guide empire',status:'active',track:'Track B — NEBCM Digital',engine:'Engine 2 — Talk',score:{viability:90,ops:92,demand:88,scale:94},insights:['Phase IV — LIVE and scaling','12-product ecosystem','Revenue target: $6K/mo by M7-9'],actions:['Expand to 3 new countries','Recruit 20 micro-influencers'],notes:'',content_days:7},
+    {id:'thrift',name:'Tirraf Thrift',sub:'Vintage hunting · Series rework',status:'active',track:'Track A — Active Operations',engine:'Engine 3 — Series',score:{viability:88,ops:90,demand:85,scale:80},insights:['MONTH 1 HERO BRAND — posts daily','Zero cost to start. Content films itself.','First sale attempt via IG DM week 4'],actions:['CREATE ACCOUNTS — @TirrafThrift','Book Talent B for first souq session','Edit Ep.01 — 6 clips from first hunt'],notes:'PRIORITY: accounts live TODAY. First post this week.',content_days:0},
+    {id:'darmundi',name:'Darmundi',sub:'Artisanal marketplace · Morocco-first',status:'building',track:'Track D — Morocco to International',engine:'Engine 3 — Series',score:{viability:72,ops:65,demand:80,scale:88},insights:['Physical flagship store = proof of concept','Online marketplace launches after store validates'],actions:['Finish flagship store renovation','Onboard 20 local artisans'],notes:'',content_days:2},
+    {id:'nebcm',name:'NEBCM Machine',sub:'24-step business creation system',status:'active',track:'Track B — NEBCM Digital',engine:'Engine 2 — Talk',score:{viability:95,ops:97,demand:90,scale:99},insights:['The meta-business: a system that builds businesses','5 parallel slots always running'],actions:['Run Phase 0 on 3 new ideas','Review 5-slot pipeline status'],notes:'',content_days:6},
+  ];
+
+  for(const b of defaults) {
+    await sb.from('businesses').insert(b);
+  }
+}
+
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+async function loadBusinesses() {
+  const { data, error } = await sb.from('businesses').select('*').order('created_at');
+  if(!error && data) BUSINESSES = data;
+}
+
+async function upsertBusiness(b) {
+  const { error } = await sb.from('businesses').upsert(b, { onConflict: 'id' });
+  if(error) { showToast('Save failed: ' + error.message); return false; }
+  return true;
+}
+
+async function logActivity(businessId, action, detail = '') {
+  await sb.from('activity_log').insert({ business_id: businessId, action, detail });
+}
+
+// ─── REALTIME ─────────────────────────────────────────────────────────────────
+function setupRealtime() {
+  sb.channel('businesses-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'businesses' }, payload => {
+      handleRealtime(payload);
+    })
+    .subscribe(status => {
+      const lbl = document.getElementById('sync-lbl');
+      if(status === 'SUBSCRIBED') lbl.textContent = 'LIVE';
+      else lbl.textContent = 'SYNC...';
+    });
+}
+
+function handleRealtime(payload) {
+  const { eventType, new: newRow, old: oldRow } = payload;
+  if(eventType === 'INSERT') {
+    BUSINESSES.push(newRow);
+    flashCard(newRow.id);
+  } else if(eventType === 'UPDATE') {
+    const idx = BUSINESSES.findIndex(b => b.id === oldRow.id);
+    if(idx >= 0) { BUSINESSES[idx] = newRow; flashCard(newRow.id); }
+    else BUSINESSES.push(newRow);
+  } else if(eventType === 'DELETE') {
+    BUSINESSES = BUSINESSES.filter(b => b.id !== oldRow.id);
+  }
+  const currentView = document.querySelector('.nav-item.active')?.dataset?.view;
+  if(currentView === 'dashboard') renderDashboard();
+  if(currentView === 'portfolio') renderPortfolio();
+  if(currentView === 'content') renderContent();
+}
+
+function flashCard(id) {
+  const card = document.querySelector(`[data-biz="${id}"]`);
+  if(!card) return;
+  const dot = document.createElement('div');
+  dot.className = 'rt-dot';
+  card.appendChild(dot);
+  setTimeout(() => dot.remove(), 1200);
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+const scoreColor = v => v>=85?'var(--teal)':v>=70?'var(--blue)':v>=55?'var(--amber)':'var(--coral)';
+const avg = s => Math.round(((s?.viability||70)+(s?.ops||70)+(s?.demand||70)+(s?.scale||70))/4);
+const statusLabel = s => ({active:'ACTIVE',building:'BUILDING',ready:'READY',pivot:'PIVOTING',validation:'VALIDATING',concept:'CONCEPT'})[s]||s.toUpperCase();
+const accentColor = s => ({active:'var(--teal)',building:'var(--purple)',ready:'var(--amber)',pivot:'var(--coral)',validation:'var(--blue)',concept:'var(--text3)'})[s]||'var(--text3)';
+const tier = v => v>=86?['UNICORN','t-unicorn']:v>=71?['GREAT','t-great']:v>=51?['GOOD','t-good']:['TRASH','t-trash'];
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type?' '+type:'');
+  setTimeout(() => { t.className = 'toast'; }, 2500);
+}
+
+// ─── CARD RENDERER ────────────────────────────────────────────────────────────
+function renderCard(b) {
+  const a = avg(b.score);
+  return `
+    <div class="pcard" style="--card-accent:${accentColor(b.status)}" data-biz="${b.id}" onclick="showDet('${b.id}')">
+      <div class="card-top">
+        <div><div class="card-name">${b.name}</div><div class="card-sub">${b.sub}</div></div>
+        <span class="badge b-${b.status}">${statusLabel(b.status)}</span>
+      </div>
+      <div class="score-row">
+        <span style="font-family:var(--fm);font-size:10px;color:var(--text3);width:42px">SCORE</span>
+        <div class="score-track"><div class="score-fill" style="width:${a}%;background:${scoreColor(a)}"></div></div>
+        <span class="score-val" style="color:${scoreColor(a)}">${a}</span>
+      </div>
+    </div>`;
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const all = BUSINESSES;
+  const active = all.filter(b => ['active','ready'].includes(b.status));
+  const building = all.filter(b => ['building','pivot'].includes(b.status));
+  const avg_score = all.length ? Math.round(all.reduce((s,b)=>s+avg(b.score),0)/all.length) : 0;
+  const healthy = all.filter(b => (b.content_days||0) >= 5).length;
+
+  document.getElementById('dash-sub').textContent = `${FOUNDER_NAME} · Tamraght/Agadir, Morocco · ${all.length} businesses in portfolio`;
+
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-lbl">Total Businesses</div>
+      <div class="stat-val" style="color:var(--amber)">${all.length}</div>
+      <div class="stat-sub">${active.length} active</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-lbl">Building</div>
+      <div class="stat-val" style="color:var(--teal)">${building.length}</div>
+      <div class="stat-sub">in progress</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-lbl">Avg Score</div>
+      <div class="stat-val" style="color:var(--blue)">${avg_score}</div>
+      <div class="stat-sub">portfolio average</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-lbl">Content Healthy</div>
+      <div class="stat-val" style="color:var(--purple)">${healthy}</div>
+      <div class="stat-sub">brands 5+ days queued</div>
+    </div>`;
+
+  let html = '';
+  html += `<div class="sec-lbl">Active Operations</div><div class="pgrid">${active.slice(0,6).map(renderCard).join('')}</div>`;
+  if(building.length) html += `<div class="sec-lbl">In Progress</div><div class="pgrid">${building.slice(0,4).map(renderCard).join('')}</div>`;
+  document.getElementById('dash-content').innerHTML = html;
+}
+
+// ─── PORTFOLIO ────────────────────────────────────────────────────────────────
+function renderPortfolio() {
+  const statuses = [...new Set(BUSINESSES.map(b => b.status))];
+  document.getElementById('port-filters').innerHTML =
+    ['All', ...statuses].map(s => `<button class="fchip ${(!activeFilters.size&&s==='All')||activeFilters.has(s)?'on':''}" onclick="toggleFilter('${s}')">${s==='All'?'All':statusLabel(s)}</button>`).join('');
+  filterPortfolio();
+}
+
+function toggleFilter(s) {
+  if(s==='All') activeFilters.clear();
+  else activeFilters.has(s) ? activeFilters.delete(s) : activeFilters.add(s);
+  renderPortfolio();
+}
+
+function filterPortfolio() {
+  const q = (document.getElementById('port-search')?.value||'').toLowerCase();
+  const tracks = [...new Set(BUSINESSES.map(b => b.track))];
+  const filtered = BUSINESSES.filter(b => {
+    const mq = !q || b.name.toLowerCase().includes(q) || b.sub.toLowerCase().includes(q);
+    const mf = !activeFilters.size || activeFilters.has(b.status);
+    return mq && mf;
+  });
+  let html = '';
+  tracks.forEach(track => {
+    const items = filtered.filter(b => b.track === track);
+    if(!items.length) return;
+    html += `<div class="sec-lbl">${track}</div><div class="pgrid">${items.map(renderCard).join('')}</div>`;
+  });
+  document.getElementById('port-content').innerHTML = html || '<div class="empty">No matches found.</div>';
+}
+
+// ─── DETAIL PANEL ─────────────────────────────────────────────────────────────
+function showDet(id) {
+  const b = BUSINESSES.find(x => x.id === id);
+  if(!b) return;
+  const a = avg(b.score);
+  const [tLabel, tClass] = tier(a);
+  const canEdit = isUnlocked;
+  const editNote = canEdit ? '' : '<div class="locked-msg">Unlock with PIN to edit.</div>';
+
+  document.getElementById('det-panel').innerHTML = `
+    <button class="det-close" onclick="closeDet()">✕ close</button>
+    <div style="margin-top:6px">
+      <span class="badge b-${b.status}">${statusLabel(b.status)}</span>
+      <span class="tier-badge ${tClass}">${tLabel}</span>
+    </div>
+    <div class="det-name">${b.name}</div>
+    <div class="det-track">${b.track} · ${b.sub}</div>
+    <div style="font-family:var(--fm);font-size:11px;color:var(--text3);margin-bottom:14px">${b.engine||''}</div>
+
+    <div class="metrics-grid">
+      <div class="metric"><div class="metric-l">Viability</div><div class="metric-v" style="color:${scoreColor(b.score?.viability||70)}">${b.score?.viability||70}</div></div>
+      <div class="metric"><div class="metric-l">Ops</div><div class="metric-v" style="color:${scoreColor(b.score?.ops||70)}">${b.score?.ops||70}</div></div>
+      <div class="metric"><div class="metric-l">Demand</div><div class="metric-v" style="color:${scoreColor(b.score?.demand||70)}">${b.score?.demand||70}</div></div>
+      <div class="metric"><div class="metric-l">Scale</div><div class="metric-v" style="color:${scoreColor(b.score?.scale||70)}">${b.score?.scale||70}</div></div>
+    </div>
+
+    <div class="det-div"></div>
+    <div class="det-sec">Status</div>
+    ${canEdit
+      ? `<select class="status-select" onchange="updateStatus('${b.id}',this.value)">
+          ${['active','building','ready','pivot','validation','concept'].map(s=>`<option value="${s}"${b.status===s?' selected':''}>${statusLabel(s)}</option>`).join('')}
+         </select>`
+      : `<span class="badge b-${b.status}" style="display:inline-block">${statusLabel(b.status)}</span>${editNote}`}
+
+    <div class="det-div"></div>
+    <div class="det-sec">Insights</div>
+    <ul class="insight-list">${(b.insights||[]).map(i=>`<li class="insight-item"><span class="i-arrow">→</span><span>${i}</span></li>`).join('')}</ul>
+
+    <div class="det-div"></div>
+    <div class="det-sec">Actions</div>
+    <div class="action-row">${(b.actions||[]).map(a=>`<button class="abtn">${a}</button>`).join('')}</div>
+
+    <div class="det-div"></div>
+    <div class="det-sec">Content Buffer</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <span style="font-family:var(--fm);font-size:13px;color:${(b.content_days||0)>=5?'var(--teal)':(b.content_days||0)>=2?'var(--amber)':'var(--coral)'};font-weight:600">${b.content_days||0} days queued</span>
+      <div style="flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden">
+        <div style="height:100%;border-radius:3px;width:${Math.min(100,(b.content_days||0)/14*100)}%;background:${(b.content_days||0)>=5?'var(--teal)':(b.content_days||0)>=2?'var(--amber)':'var(--coral)'}"></div>
+      </div>
+    </div>
+    ${canEdit
+      ? `<div style="display:flex;gap:6px">
+           <button class="abtn" onclick="updateContent('${b.id}',-1)">− 1 day</button>
+           <button class="abtn" onclick="updateContent('${b.id}',7)">+ 7 days</button>
+           <button class="abtn primary" onclick="updateContent('${b.id}',14)">+ 14 (mega day)</button>
+         </div>`
+      : editNote}
+
+    <div class="det-div"></div>
+    <div class="det-sec">Notes</div>
+    ${canEdit
+      ? `<textarea class="notes-area" id="notes-${b.id}" placeholder="Add notes...">${b.notes||''}</textarea>
+         <button class="save-btn" onclick="saveNotes('${b.id}')">Save Notes</button>`
+      : `<div style="font-size:12px;color:var(--text2);line-height:1.6;font-family:var(--fm)">${b.notes||'No notes yet.'}</div>${editNote}`}
+  `;
+  document.getElementById('det-overlay').classList.add('open');
+}
+
+function closeDet() { document.getElementById('det-overlay').classList.remove('open'); }
+
+async function updateStatus(id, status) {
+  const b = BUSINESSES.find(x => x.id === id);
+  if(!b) return;
+  b.status = status;
+  const ok = await upsertBusiness(b);
+  if(ok) { await logActivity(id, 'status_changed', status); showToast('Status updated', 'ok'); renderDashboard(); }
+}
+
+async function updateContent(id, delta) {
+  const b = BUSINESSES.find(x => x.id === id);
+  if(!b) return;
+  b.content_days = Math.max(0, (b.content_days||0) + delta);
+  const ok = await upsertBusiness(b);
+  if(ok) { await logActivity(id, 'content_updated', `${delta > 0 ? '+' : ''}${delta} days`); showDet(id); renderContent(); }
+}
+
+async function saveNotes(id) {
+  const b = BUSINESSES.find(x => x.id === id);
+  if(!b) return;
+  b.notes = document.getElementById('notes-'+id)?.value || '';
+  const ok = await upsertBusiness(b);
+  if(ok) { await logActivity(id, 'notes_updated', ''); showToast('Notes saved', 'ok'); }
+}
+
+// ─── CONTENT TRACKER ─────────────────────────────────────────────────────────
+function renderContent() {
+  const rows = BUSINESSES.map(b => {
+    const d = b.content_days || 0;
+    const col = d>=5?'var(--teal)':d>=2?'var(--amber)':'var(--coral)';
+    const lbl = d>=5?'Healthy':d>=2?'Low':'Critical';
+    return `<div class="crow">
+      <div class="ccell" style="font-weight:600">${b.name}</div>
+      <div class="ccell" style="color:var(--text2)">TikTok · IG · FB</div>
+      <div class="ccell"><span style="font-family:var(--fm);color:${col}">${d}d</span><div class="bar-outer"><div class="bar-inner" style="width:${Math.min(100,d/14*100)}%;background:${col}"></div></div></div>
+      <div class="ccell" style="color:${col};font-family:var(--fm);font-size:11px">${lbl}</div>
+      <div class="ccell">${isUnlocked?`<button class="abtn" style="font-size:10px;padding:3px 8px" onclick="updateContent('${b.id}',14)">+14d</button>`:'—'}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('ctable').innerHTML = `
+    <div class="crow chdr">
+      <div class="ccell">Brand</div>
+      <div class="ccell">Platforms</div>
+      <div class="ccell">Days Queued</div>
+      <div class="ccell">Status</div>
+      <div class="ccell">Add</div>
+    </div>${rows}`;
+}
+
+// ─── WEEKLY ───────────────────────────────────────────────────────────────────
+function renderWeekly() {
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const todayIdx = [1,2,3,4,5,6,0][new Date().getDay()];
+  const plan = [
+    [{t:'Edit 10 clips',c:'edit'},{t:'Textiles + Cookie',c:''}],
+    [{t:'Edit 10 clips',c:'edit'},{t:'Thrift + Paindwich',c:''}],
+    [{t:'Edit 10 clips',c:'edit'},{t:'SAFAR + MZN',c:''}],
+    [{t:'POSTING DAY',c:'post'},{t:'168 posts → Buffer',c:'post'}],
+    [{t:'Edit 10 clips',c:'edit'},{t:'PPS + Darmundi',c:''}],
+    [{t:'Edit + Analytics',c:'edit'},{t:'Top 3 clips/brand',c:''}],
+    [{t:'Maintenance',c:''},{t:'Prep next cycle',c:''}],
+  ];
+  document.getElementById('wgrid').innerHTML = days.map((d,i)=>`
+    <div class="wday${i===todayIdx?' today':''}">
+      <div class="wday-hdr">${d}${i===todayIdx?' · today':''}</div>
+      ${plan[i].map(t=>`<div class="wtask ${t.c}">${t.t}</div>`).join('')}
+    </div>`).join('');
+
+  const critical = BUSINESSES.filter(b=>(b.content_days||0)<3).length;
+  document.getElementById('cycle-health').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="stat-card"><div class="stat-lbl">Next Mega Day</div><div class="stat-val" style="color:var(--amber);font-size:16px">Schedule it</div><div class="stat-sub">8-hr fluid session</div></div>
+      <div class="stat-card"><div class="stat-lbl">Critical Buffer</div><div class="stat-val" style="color:${critical>0?'var(--coral)':'var(--teal)'}">${critical}</div><div class="stat-sub">brands below 3 days</div></div>
+    </div>`;
+}
+
+// ─── ACTIVITY FEED ────────────────────────────────────────────────────────────
+async function renderActivity() {
+  const { data } = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(30);
+  if(!data || !data.length) {
+    document.getElementById('feed-list').innerHTML = '<div class="empty">No activity yet. Updates will appear here as you edit businesses.</div>';
+    return;
+  }
+  document.getElementById('feed-list').innerHTML = data.map(item => {
+    const b = BUSINESSES.find(x => x.id === item.business_id);
+    const name = b ? b.name : item.business_id;
+    const time = new Date(item.created_at).toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
+    const actionMap = { status_changed:'Status → '+item.detail, content_updated:'Content buffer '+item.detail, notes_updated:'Notes updated', added:'Added to portfolio' };
+    return `<div class="feed-item">
+      <span class="feed-time">${time}</span>
+      <span class="feed-text"><span class="feed-brand">${name}</span> — ${actionMap[item.action]||item.action}</span>
+    </div>`;
+  }).join('');
+}
+
+// ─── AI ADVISOR ───────────────────────────────────────────────────────────────
+async function sendChat() {
+  const input = document.getElementById('chat-in');
+  const msg = input.value.trim();
+  if(!msg) return;
+  addMsg(msg, 'user');
+  input.value = '';
+
+  const typingEl = addMsg('', 'ai');
+  typingEl.innerHTML = '<span class="typing"></span>';
+
+  const context = `You are the NEBCM Strategic AI Advisor for a solo entrepreneur in Tamraght/Agadir, Morocco running the Never-Ending Business Creation Machine.
+Current portfolio: ${BUSINESSES.length} businesses.
+Active brands: ${BUSINESSES.filter(b=>b.status==='active').map(b=>b.name).join(', ')}.
+Month 1 hero brands (daily posting): Tirraf Thrift + Sidi Cookie.
+Team: Ziyad (videographer/editor), 2 textile workshop staff.
+Content system: 8-hour mega day bi-weekly, 24 posts/day across 8 brands via Buffer auto-schedule.
+Key businesses: ${BUSINESSES.map(b=>`${b.name} (${b.status})`).join(', ')}.
+Be decisive, specific, name actual businesses. Under 200 words.`;
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: msg }], system: context, max_tokens: 500 }),
+    });
+    const data = await res.json();
+    typingEl.textContent = data.content?.[0]?.text || data.error || 'No response.';
+  } catch(e) {
+    typingEl.textContent = 'Error: ' + e.message;
+  }
+}
+
+function addMsg(text, role) {
+  const wrap = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.textContent = text;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  return div;
+}
+
+// ─── ADD MODAL ────────────────────────────────────────────────────────────────
+function openAdd() {
+  if(!isUnlocked && PIN_HASH) { openPinModal(); return; }
+  document.getElementById('add-modal').classList.add('open');
+  document.getElementById('ai-panel').classList.remove('on');
+  ['f-name','f-sub','f-desc','f-score'].forEach(id => { const el=document.getElementById(id); if(el)el.value=''; });
+}
+function closeAdd() { document.getElementById('add-modal').classList.remove('open'); }
+
+async function submitIdea() {
+  const name = document.getElementById('f-name').value.trim();
+  const sub = document.getElementById('f-sub').value.trim();
+  if(!name||!sub) { showToast('Name and description required'); return; }
+  const score = parseInt(document.getElementById('f-score').value)||70;
+  const newBiz = {
+    id: 'biz_'+Date.now(),
+    name, sub,
+    status: document.getElementById('f-status').value,
+    track: document.getElementById('f-track').value,
+    engine: document.getElementById('f-engine').value,
+    score: { viability:score, ops:score, demand:score, scale:score },
+    insights: [document.getElementById('f-desc').value||'Added via Command Center'],
+    actions: ['Define strategy','Build content plan','Run Phase 0'],
+    notes: '',
+    content_days: 0,
+  };
+  const ok = await upsertBusiness(newBiz);
+  if(ok) {
+    await loadBusinesses();
+    await logActivity(newBiz.id, 'added', name);
+    closeAdd();
+    renderDashboard();
+    showToast(name + ' added to portfolio', 'ok');
+  }
+}
+
+async function analyzeIdea() {
+  const name = document.getElementById('f-name').value.trim();
+  const desc = document.getElementById('f-desc').value.trim();
+  if(!name&&!desc) { showToast('Add name and description first'); return; }
+  const panel = document.getElementById('ai-panel');
+  const content = document.getElementById('ai-content');
+  panel.classList.add('on');
+  content.innerHTML = '<span class="typing"></span>';
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: `NEBCM analysis for Morocco-based entrepreneur:\n\nBusiness: ${name}\nDescription: ${desc}\n\nGive: (1) Viability 0-100, (2) Scalability 0-100, (3) Morocco advantage or risk, (4) Top 3 risks, (5) First 3 actions. Be specific and brief.` }],
+        max_tokens: 400,
+      }),
+    });
+    const data = await res.json();
+    content.textContent = data.content?.[0]?.text || data.error || 'Analysis failed.';
+  } catch(e) {
+    content.textContent = 'Error: ' + e.message;
+  }
+}
+
+// ─── PIN ──────────────────────────────────────────────────────────────────────
+function openPinModal() {
+  if(isUnlocked) { isUnlocked=false; updatePinUI(); showToast('Locked'); return; }
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('pin-error').textContent = '';
+  document.getElementById('pin-overlay').classList.add('open');
+}
+function closePinModal() { document.getElementById('pin-overlay').classList.remove('open'); pinBuffer=''; }
+
+function pinKey(k) {
+  if(k === '⌫') { pinBuffer = pinBuffer.slice(0,-1); updatePinDots(); return; }
+  if(k === '' || pinBuffer.length >= 4) return;
+  pinBuffer += k;
+  updatePinDots();
+  if(pinBuffer.length === 4) {
+    setTimeout(checkPin, 100);
+  }
+}
+
+function checkPin() {
+  if(simpleHash(pinBuffer) === PIN_HASH) {
+    isUnlocked = true;
+    updatePinUI();
+    closePinModal();
+    showToast('Unlocked — edit mode active', 'ok');
+    // Re-render current view to show edit controls
+    const currentView = document.querySelector('.nav-item.active')?.dataset?.view;
+    if(currentView) nav(currentView);
+  } else {
+    document.getElementById('pin-error').textContent = 'Incorrect PIN. Try again.';
+    pinBuffer = '';
+    updatePinDots();
+  }
+}
+
+function updatePinDots() {
+  for(let i=0;i<4;i++) {
+    document.getElementById('pd'+i).classList.toggle('filled', i < pinBuffer.length);
+  }
+}
+
+function updatePinUI() {
+  const btn = document.getElementById('pin-btn');
+  const lbl = document.getElementById('pin-btn-lbl');
+  const fab = document.getElementById('fab');
+  if(!PIN_HASH) { btn.style.display='none'; isUnlocked=true; }
+  else if(isUnlocked) {
+    btn.classList.add('active');
+    lbl.textContent = 'Unlock Edit · Lock';
+    fab.classList.remove('locked');
+  } else {
+    btn.classList.remove('active');
+    lbl.textContent = 'Unlock Edit';
+    fab.classList.add('locked');
+  }
+}
+
+// ─── NAV ──────────────────────────────────────────────────────────────────────
+function nav(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelector(`[data-view="${v}"]`).classList.add('active');
+  if(v==='portfolio') renderPortfolio();
+  if(v==='content')   renderContent();
+  if(v==='weekly')    renderWeekly();
+  if(v==='activity')  renderActivity();
+}
+
+// ─── CLOCK ────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const t = new Intl.DateTimeFormat('en-US',{timeZone:'Africa/Casablanca',hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(now);
+  const d = new Intl.DateTimeFormat('en-US',{timeZone:'Africa/Casablanca',weekday:'short',month:'short',day:'numeric'}).format(now);
+  document.getElementById('clock').textContent = `${d}  ${t} WET`;
+}
+
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+(async () => {
+  const setupDone = localStorage.getItem('ncc_setup');
+  if(!setupDone || !SUPABASE_URL || !SUPABASE_KEY) {
+    document.getElementById('setup-screen').style.display = 'flex';
+  } else {
+    await initApp();
+  }
+})();
+</script>
+</body>
+</html>

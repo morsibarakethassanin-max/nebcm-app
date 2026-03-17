@@ -1,0 +1,13 @@
+{
+  "name": "nebcm-command-center",
+  "version": "1.0.0",
+  "description": "NEBCM Command Center — Business portfolio tracker with real-time sync",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  }
+}
